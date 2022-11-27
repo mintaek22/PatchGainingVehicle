@@ -27,26 +27,30 @@
 #define LOC_START 0 		// 로봇의 시작 위치 정의 - (row,column)좌표값을 MAP_SIZE_ROW * row  + column 로 나타낸다
 #define DIR_START 2			// 로봇의 시작 방향 정의 - 1 : 위쪽 | 2: 오른쪽 | 3 : 아래쪽 | 4 : 왼쪽
 #define LOC_DEST 15			// 도착점 좌표
-#define LOC_MOV 15			// 이동점 좌표
+#define LOC_MOV 15			// 이동점 좌표 - 도착점과 이동점 좌표가 같을 수도 있다
+#define GRID_TICK 4 		// 가운데 컬러 센서가 좌우 컬러센서보다 뒤에 있을 경우 갱신을 위해 확인하는 틱
 
 //상태 변수 관련 정보 - 상태 변수는 stat 배열에 저장되며 아래는 각 스텟의 인덱스이다 | get_stat(상태변수명)으로 접근 가능 | set_stat(상태변수명, 값)으로 셋 가능
 #define STATUS_SIZE 3		// 상태 변수 배열의 크기
-#define DETECT 0			// 현재 디텍팅 상태가 저장된 인덱스 - stat[DETECT] = 0 : 시작 전 | stat[DETECT] = 1 : 격자를 순서대로 탐색 중 | stat[DETECT] = 2 : 탐색 완료 후 패치 경로를 탐색 중 | stat[DETECT] = 3 : 도착점에서 이동점으로 이동 중 | stat[DETECT] = 4 : 패치 경로에 따라 되돌아오기 진행 중
+#define DETECT 0			// 현재 디텍팅 상태가 저장된 인덱스 - stat[DETECT] = 0 : 시작 전 | stat[DETECT] = 1 : 격자를 순서대로 탐색 중 | stat[DETECT] = 2 : 탐색 완료 후 도착점에서 이동점으로 이동 중  | stat[DETECT] = 3 : 패치 경로를 탐색 중 | stat[DETECT] = 4 : 패치 경로에 따라 되돌아오기 진행 중
 #define MOVE 1 				// 현재 로봇의 이동 상태가 저장된 인덱스 stat[MOVE] = 0 : 현재 로봇은 정지 상태  | stat[MOVE] = 1 : 현재 로봇은 직진 상태  | stat[MOVE] = 2 : 현재 로봇은 dir_dest을 향해 회전 중 상태
-#define ONGRID 2			// 현재 로봇이 격자를 발견하였는가 stat[ONGRID] = 0 : 로봇은 선 위 | stat[ONGRID] = 1 : 로봇은 격자 위에
+#define ONGRID 2			// 현재 로봇이 격자를 발견하였는가 stat[ONGRID] = 0 : 로봇은 격자좌표 위에 있지 않음 | stat[ONGRID] = 1 : 왼쪽 혹은 오른쪽 컬러센서에 노란색이 인식됨 | stat[ONGRID] = 2 : 왼쪽 혹은 오른쪽 컬러센서가 막 노란색에서 흰색으로 변함 -> 격자 위에 진입함
+#define OFFROAD 3			// 현재 로봇이 길을 벗어났는가 (가운데 컬러 센서 값이 흰색인가) - stat[OFFROAD] = 0 : 로봇은 길을 잘 따라가고 있음(가운데 컬러센서가 흰색이 아님) | stat[OFFROAD] = 1 : 로봇은 길을 벗어남(가운데 컬러센서가 흰색임)
 
 #define DEST_QUEUE_SIZE 20 	// destination queue 의 크기를 정의 -  destination queue는 원형 큐로 dq_idx 변수가 현재 가리키고 있는 destination queue 의 인덱스이다 | 자세한 설명은 문서에
 
 int stat[STATUS_SIZE];
 int dq[DEST_QUEUE_SIZE]; 	// destination queue를 정의한다 -원형 큐이다 | 자세한 설명은 문서에
 int map[MAP_SIZE_ROW][MAP_SIZE_COL]; // 0 : 빈 공간 | 1: 빨간 색 | 2 : 파란 색
+int patch = 0; 				//패치를 저장하는 변수 - 가장 최근에 가운데 컬러 센서에 인식된 값이 [0 : 다른 색 | 1: 빨간 색 | 2 : 파란 색]의 형태로 저장되고, 빨간 색 혹은 파란색 값이 해당 위치의 맵 데이터에 복사 완료 후에는 다시 0로 변경된다
+int grid_tick = GRID_TICK;
 
 int dq_idx = 0;
 
-int dir_cur = 2;			// 로봇의 현재 방향을 나타내는 변수  - 1 : 위쪽 | 2: 오른쪽 | 3 : 아래쪽 | 4 : 왼쪽
-int dir_dest = 2;			// 로봇의 목표 방향을 나타내는 변수 - 회전 시 사용한다
+int dir_cur = DIR_START;			// 로봇의 현재 방향을 나타내는 변수  - 1 : 위쪽 | 2: 오른쪽 | 3 : 아래쪽 | 4 : 왼쪽
+int dir_dest = DIR_START;			// 로봇의 목표 방향을 나타내는 변수 - 회전 시 사용한다
 
-int loc_cur = 0;			// 로봇의 현재 위치를 나타내는 변수 - (row,column)좌표값을 MAP_SIZE_COL * row  + column 로 나타낸다  | ex - 5 x 4 맵에서 로봇이 1행 2열에 있다면 loc_cur = 7
+int loc_cur = LOC_START;	// 로봇의 현재 위치를 나타내는 변수 - (row,column)좌표값을 MAP_SIZE_COL * row  + column 로 나타낸다  | ex - 5 x 4 맵에서 로봇이 1행 2열에 있다면 loc_cur = 7
 
 int score = 0;				// 현재 점수
 
@@ -63,15 +67,30 @@ char * dir_to_text(int dir);
 void print_map(int startline);
 void print_stat(void);
 
+
+void set_motor(int left_speed, int right_speed);
+void update_stat_by_color(void);
+void update_status(void);
+int get_loc_diff(int dir);
+void update_loc(void);
+void update_dq(int ex_stat);
+void update_dq_1(void);
+void update_dq_2(void);
+void calculate_direction(void);
+void update_action(void);
+
 task main()
 {
 	init_stat();
 	init_map();
 	init_dq();
 	sleep(5000);  // 5초동안 대기 후 출발
+	set_stat(MOVE,1);
 
 	while(1){
-
+		update_stat_by_color();
+		update_status();
+		update_action();
 	}
 }
 
@@ -82,6 +101,8 @@ void init_stat(void){
 	dir_cur = DIR_START; //로봇의 시작 시 방향 정의
 	loc_cur = LOC_START;
 	score = 0;
+	patch = 0; 
+	grid_tick = GRID_TICK;
 	return;
 }
 
@@ -105,10 +126,10 @@ void init_map(void){
 	}
 }
 
-//destination queue 를 0으로 초기화한다
+//destination queue 를 -1으로 초기화한다
 void init_dq(void){
 	for(int i = 0; i< DEST_QUEUE_SIZE ; i++){
-		dq[i] = 0;
+		dq[i] = -1;
 	}
 	dq_idx = 0;
 }
@@ -154,3 +175,217 @@ void print_stat(){
 	print_map(7);
 }
 
+
+
+// left 와  right 모터의 스피드를 input값으로 변경한다
+void set_motor(int left_speed, int right_speed){
+	setMotorSpeed(lm, left_speed);
+	setMotorSpeed(rm, right_speed);
+}
+
+// 현재 컬러에 따라 각 그리드 좌표 위를 지나는지 판단하는 함수
+void update_stat_by_color(void){
+	//컬러 센서 값들 받아오기
+	int col_left = getColorName(cs_left);
+	int col_middle = getColorName(cs_middle);
+	int col_right = getColorName(cs_right);
+
+	if(col_middle == WHITE){
+		//가운데 컬러 센서 값이 흰색일 경우 길을 벗어남 - CALIBRATION 필요
+		set_stat(OFFROAD,1);
+	} else{
+		if(!patch){
+			// 가장 최근의 격자좌표 컬러를 저장하는 patch변수에 0이 저장되어 있고 현재 가운데 컬러센서에 빨간 색 혹은 파란색이 인식되었을 때 해당 값을 1 또는 2로 변경한다
+			if(col_middle == RED) patch = 1;
+			if(col_middle == BLUE) patch = 2;
+		}
+		// 왼쪽 오른쪽 센서가 둘다 흰색일 경우
+		if(col_left == WHITE && col_right == WHITE){
+			// 왼쪽 혹은 오른쪽 센서에 노란색 길이 인식되었다가 이제 막 흰색으로 변한 경우 -> 그리드 좌표 위에 올라옴 판단 
+			if(get_stat(ONGRID) == 1){
+				// 가운데 컬러 센서가 좌우 컬러센서보다 뒤에 있을 경우를 대비해 지정된 틱 횟수만큼 추가 확인 후 ongrid 스탯을 2로 변경
+				if(!grid_tick--){
+					set_stat(ONGRID,2);
+					grid_tick = GRID_TICK;
+					return;
+				}
+				
+			}
+		}else{
+			// 왼쪽 오른쪽 센서 둘 중 하나 이상이 흰색이 아닐 경우
+
+			// 흰색에서 이제 막 두 센서에 노란색이 인식되었을 경우 ongrid  스텟을 1로 변경
+			if(get_stat(ONGRID) == 0)
+				set_stat(ONGRID,1);
+		}
+		
+	}
+	
+		 
+}
+
+// 컬러 센서로 받아온 정보에 따라서 부가적으로 stat을 업데이트 하는 함수
+void update_status(void){
+	//맵이 길을 벗어나지 않은 경우 - 나머지 기능 실험시에는 주석처리후 실험
+	// if (!get_stat(OFFROAD)){
+		// 격자 좌표위에 올라온 경우
+		if (get_stat(ONGRID) == 2){
+			int detect = get_stat(DETECT);
+
+			// 로봇이 격자위에서 동작을 수행중인 경우
+			if (detect){
+				update_loc(); // 현재 좌표를 업데이트한다
+
+				// 현재 격자를 탐색하는 중이고 최근 패치가 빨간 색 혹은 파란 색인 경우
+				if (detect == 1 && !patch){
+					map[get_loc_row(loc_cur)][get_loc_col(loc_cur)] = patch; // 맵의 현재 좌표의 컬러 값을 해당 색으로 변경한다
+					patch = 0;												 // patch 변수를 초기화한다
+				}
+
+				//현재 목표 위치에 도달하였을 경우 - detect 변수의 값이 1, 2, 4 가능
+				if(loc_cur == dq[dq_idx]){
+					dq_idx = (dq_idx + 1) % DEST_QUEUE_SIZE; // destination queue 의 인덱스를 다음 인덱스 값으로 변경한다 -> 목표 위치 값을 갱신한다
+
+					// 해당 상태(패치 탐색 or 도착점 -> 이동점 이동 or 이동점 -> 출발점 회귀)가 끝난 경우
+					if(dq[dq_idx] == -1){
+						// 패치 탐색 혹은 이동점으로 이동이 끝난 경우
+						if(detect == 1 || detect == 2){
+							update_dq(detect); 	// destination queue 를 갱신한다
+							dq_idx = 0; 	// destination queue index 를 갱신한다
+						}else if(detect == 4){
+							// 회귀가 끝난 경우
+							set_stat(MOVE,0); //정지한다
+							return;
+							// update_action에서 판단 시 : detect 가 4이고 move가 0이면 상황 종료
+						}
+					} 
+
+					calculate_direction();  // 다음 목표를 위한 회전 방향을 설정한다
+				}
+			}
+			else
+			{
+				set_stat(DETECT, 1); //로봇이 맵 바깥에서 막 맵에 진입하였을 때 - detect stat을 1로 변경
+				return;
+			}
+		}
+	// }
+}
+
+// 방향 값에 따라 MAP_SIZE_COL * row  + column 위치 좌표의 수정값을 리턴한다.
+// 예를 들어 5 * 4 맵에서 현재 위치가 [row,col] : [1,2] = 7이고 아래쪽으로 한칸 가려면 얼마만큼 좌표값을 수정해야 하는 지 얻기 위해 get_loc_diff(3) 을 실행하면 (1 : 위쪽 | 2: 오른쪽 | 3 : 아래쪽 | 4 : 왼쪽)
+// [2,2] 는 MAP_SIZE_COL * row  + column 위치 좌표가 12 이므로 7에서 +5 를 해야 한다. 따라서 get_loc_diff(7,3)의 return 값은 5이다. 추가로 예시를 들면 get_loc_diff(4) 의 return 값은 -1이다
+int get_loc_diff(int dir){
+	if(dir == 4) return -1;	
+	if(dir == 2) return 1;
+	if(dir == 1) return -1 * MAP_SIZE_COL;
+	if(dir == 3) return MAP_SIZE_COL;
+}
+
+// 현재 로봇이 위치한 좌표를 업데이트 하는 함수
+void update_loc(void){
+	loc_cur += get_loc_diff(dir_cur);
+}
+
+// destination queue를 업데이트하는 함수
+void update_dq(int ex_stat){
+	// 패치 탐색이 끝난 경우
+	if(ex_stat == 1){
+		dq[0] = LOC_MOV;	// 다음 목표를 이동점으로 교체한다
+		dq[1] = -1;			// 마지막 목표 이후의 값은 -1이어야 한다
+		set_stat(DETECT,2); // 현재 detect 스텟을 도착점 -> 이동점 이동 중 상태로 교체한다 
+	} 
+	// 이동점으로 이동이 끝난 경우 -> 알고리즘에 따라 각 과제의 최대 점수 획득 경로를 계산한 후 dq를 해당 경로로 업데이트한다
+	if(ex_stat == 2){
+		set_stat(DETECT,3); // 현재 detect 스텟을 점수 획득 경로 연산 중 상태로 업데이트한다
+		set_stat(MOVE,0);
+		set_motor(0,0); 	//연산이 오래 걸릴 수도 있는 특수한 상황이므로 전체적인 자료 구조와는 맞지 않지만 정지 후 연산한다
+
+		if(TASK == 1){
+			update_dq_1();
+			dq_idx = 0;
+			set_stat(DETECT,4); // 현재 detect 스텟을 패치 경로에 따라 되돌아오기 진행 중 상태로 업데이트한다
+		}
+		if(TASK == 2){
+			update_dq_2();
+			dq_idx = 0;
+			set_stat(DETECT,4); // 현재 detect 스텟을 패치 경로에 따라 되돌아오기 진행 중 상태로 업데이트한다
+		}
+	} 
+}
+
+
+// 1번 과제의 최다 획득 경로를 계산하고 해당 정보를 dq에 업데이트 하는 함수
+void update_dq_1(void){
+	/*
+	code here!
+	*/
+	/*
+	for ...
+		dq[somthing] = something
+	
+
+	dq[end+1] = -1;   //-> 마지막 경로 다음 값을 -1로 수정하는 것 잊지 말기
+	*/
+}
+
+// 2번 과제의 최다 획득 경로를 계산하고 해당 정보를 dq에 업데이트 하는 함수
+void update_dq_2(void){
+	/*
+	code here!
+	*/
+	/*
+	for ...
+		dq[somthing] = something
+	
+
+	dq[end+1] = -1;   //-> 마지막 경로 다음 값을 -1로 수정하는 것 잊지 말기
+	*/
+}
+
+// 다음 목표를 위한 회전 방향을 설정하는 함수 (1 : 위쪽 | 2: 오른쪽 | 3 : 아래쪽 | 4 : 왼쪽)
+void calculate_direction(void){
+	int dest = dq[dq_idx];
+
+	// 현재 위치와 다음 목표의 행이 같은 경우
+	if(get_loc_row(loc_cur) == get_loc_row(dest)){
+		// 목표 위치가 현재 위치의 오른쪽에 있는 경우
+		if(get_loc_col(dest) > get_loc_col(loc_cur)){
+			dir_dest = 2;  		// 로봇의 목표 방향을 오른쪽으로 설정
+			set_stat(MOVE,2); 	// 로봇의 움직임 상태를 회전 중으로 설정
+			return;
+		}
+		// 목표 위치가 현재 위치의 왼쪽에 있는 경우
+		if(get_loc_col(dest) < get_loc_col(loc_cur)){
+			dir_dest = 4;  		// 로봇의 목표 방향을 오른쪽으로 설정
+			set_stat(MOVE,2); 	// 로봇의 움직임 상태를 회전 중으로 설정
+			return;
+		}
+		return;
+	}
+
+	// 현재 위치와 다음 목표의 열이 같은 경우
+	if(get_loc_col(loc_cur) == get_loc_col(dest)){
+		// 목표 위치가 현재 위치의 오른쪽에 있는 경우
+		if(get_loc_row(dest) > get_loc_row(loc_cur)){
+			dir_dest = 3;  		// 로봇의 목표 방향을 아래쪽으로 설정
+			set_stat(MOVE,2); 	// 로봇의 움직임 상태를 회전 중으로 설정
+			return;
+		}
+		// 목표 위치가 현재 위치의 왼쪽에 있는 경우
+		if(get_loc_col(dest) < get_loc_col(loc_cur)){
+			dir_dest = 1;  		// 로봇의 목표 방향을 위쪽으로 설정
+			set_stat(MOVE,2); 	// 로봇의 움직임 상태를 회전 중으로 설정
+			return;
+		}
+		return;
+	}
+}
+
+// 현재 스텟에 따라 다음 행동을 지정하는 함수
+void update_action(void){
+
+
+
+
+}
