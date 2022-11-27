@@ -216,9 +216,9 @@ void print_map(int startline){
 
 // 현재 스텟을 출력하는 함수
 void print_stat(){
-	displayBigTextLine(1, "det %d mv %d score %d",get_stat(DETECT), get_stat(MOVE),score);
+	displayBigTextLine(1, "det %d mv %d off %d",get_stat(DETECT), get_stat(MOVE),get_stat(OFFROAD));
 	displayBigTextLine(3, "cur [%d,%d] next [%d,%d]", get_loc_row(loc_cur), get_loc_col(loc_cur), get_loc_row(dq[dq_idx]), get_loc_col(dq[dq_idx]));
-	displayBigTextLine(5, "cur %s dest %s",dir_to_text(dir_cur),dir_to_text(dir_dest));
+	displayBigTextLine(5, "cur %s dest %s score %d",dir_to_text(dir_cur),dir_to_text(dir_dest),score);
 	print_map(7);
 }
 
@@ -293,6 +293,12 @@ void update_status(void){
 					map[get_loc_row(loc_cur)][get_loc_col(loc_cur)] = patch; // 맵의 현재 좌표의 컬러 값을 해당 색으로 변경한다
 					patch = 0;												 // patch 변수를 초기화한다
 				}
+
+				// 만약 회귀 중이고 현재 과제가 제 2과제일 경우 이동시마다 스코어가 1씩 줄어야 한다
+				if (detect == 4 && TASK == 2){
+					score -= 1;
+				}
+
 
 				//현재 목표 위치에 도달하였을 경우 - detect 변수의 값이 1, 2, 4 가능
 				if(loc_cur == dq[dq_idx]){
