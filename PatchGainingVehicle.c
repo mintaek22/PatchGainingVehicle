@@ -95,9 +95,13 @@ task main()
 	set_stat(MOVE,1);
 
 	while(1){
+		print_stat();
 		update_stat_by_color();
+		print_stat();
 		update_status();
+		print_stat();
 		update_action();
+		print_stat();
 		sleep(TICKRATE);
 	}
 }
