@@ -31,7 +31,7 @@
 #define GRID_TICK 4 		// 가운데 컬러 센서가 좌우 컬러센서보다 뒤에 있을 경우 갱신을 위해 확인하는 틱
 
 //상태 변수 관련 정보 - 상태 변수는 stat 배열에 저장되며 아래는 각 스텟의 인덱스이다 | get_stat(상태변수명)으로 접근 가능 | set_stat(상태변수명, 값)으로 셋 가능
-#define STATUS_SIZE 3		// 상태 변수 배열의 크기
+#define STATUS_SIZE 4		// 상태 변수 배열의 크기
 #define DETECT 0			// 현재 디텍팅 상태가 저장된 인덱스 - stat[DETECT] = 0 : 시작 전 | stat[DETECT] = 1 : 격자를 순서대로 탐색 중 | stat[DETECT] = 2 : 탐색 완료 후 도착점에서 이동점으로 이동 중  | stat[DETECT] = 3 : 패치 경로를 탐색 중 | stat[DETECT] = 4 : 패치 경로에 따라 되돌아오기 진행 중
 #define MOVE 1 				// 현재 로봇의 이동 상태가 저장된 인덱스 stat[MOVE] = 0 : 현재 로봇은 정지 상태  | stat[MOVE] = 1 : 현재 로봇은 직진 상태  | stat[MOVE] = 2 : 현재 로봇은 dir_dest을 향해 회전 중 상태
 #define ONGRID 2			// 현재 로봇이 격자를 발견하였는가 stat[ONGRID] = 0 : 로봇은 격자좌표 위에 있지 않음 | stat[ONGRID] = 1 : 왼쪽 혹은 오른쪽 컬러센서에 노란색이 인식됨 | stat[ONGRID] = 2 : 왼쪽 혹은 오른쪽 컬러센서가 막 노란색에서 흰색으로 변함 -> 격자 위에 진입함
