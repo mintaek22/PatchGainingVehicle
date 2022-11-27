@@ -45,6 +45,8 @@ int map[MAP_SIZE_ROW][MAP_SIZE_COL]; // 0 : 빈 공간 | 1: 빨간 색 | 2 : 파
 int patch = 0; 				//패치를 저장하는 변수 - 가장 최근에 가운데 컬러 센서에 인식된 값이 [0 : 다른 색 | 1: 빨간 색 | 2 : 파란 색]의 형태로 저장되고, 빨간 색 혹은 파란색 값이 해당 위치의 맵 데이터에 복사 완료 후에는 다시 0로 변경된다
 int grid_tick = GRID_TICK;
 
+int score_q[DEST_QUEUE_SIZE];	// 점수 변화량을 저장하는 배열 -> 자세한 설명은 문서에
+
 int dq_idx = 0;
 
 int dir_cur = DIR_START;			// 로봇의 현재 방향을 나타내는 변수  - 1 : 위쪽 | 2: 오른쪽 | 3 : 아래쪽 | 4 : 왼쪽
@@ -60,6 +62,9 @@ int get_stat(int index);
 void set_stat(int index, int value);
 void init_map(void);
 void init_dq(void);
+void init_score_q(void);
+int get_next_column(int col);
+void update_dq_detect(void);
 int get_loc_row(int loc);
 int get_loc_col(int loc);
 int get_loc(int x, int y);
@@ -84,13 +89,16 @@ task main()
 	init_stat();
 	init_map();
 	init_dq();
+	init_score_q();
 	sleep(5000);  // 5초동안 대기 후 출발
+	update_dq_detect(); //destination queue를 ㄹ 자 모양의 탐색으로 초기화
 	set_stat(MOVE,1);
 
 	while(1){
 		update_stat_by_color();
 		update_status();
 		update_action();
+		sleep(TICKRATE);
 	}
 }
 
@@ -126,12 +134,51 @@ void init_map(void){
 	}
 }
 
-//destination queue 를 -1으로 초기화한다
+// destination queue 를 -1으로 초기화한다
 void init_dq(void){
 	for(int i = 0; i< DEST_QUEUE_SIZE ; i++){
 		dq[i] = -1;
 	}
 	dq_idx = 0;
+}
+
+// score queue 를 -1으로 초기화한다
+void init_score_q(void){
+	for(int i = 0; i< DEST_QUEUE_SIZE ; i++){
+		score_q[i] = 0;
+	}
+}
+
+int get_next_column(int col){
+	if(col == 0) return MAP_SIZE_COL - 1;
+	else return 0;
+}
+
+// destination queue를 ㄹ 자 모양의 탐색으로 초기화하는 함수
+void update_dq_detect(void){
+	int idx = 0;
+	if(get_loc_row(LOC_START) == 0){
+		int col = get_next_column(get_loc_col(LOC_START));
+		dq[idx++] = get_loc(0,col);
+		
+		for(int i = 1; i < MAP_SIZE_ROW ; i++){
+			dq[idx++] = get_loc(i,col);
+			col = get_next_column(get_loc_col(LOC_START));
+			dq[idx++] = get_loc(i,col);
+		}
+		return;
+	}
+	if(get_loc_row(LOC_START) == MAP_SIZE_ROW - 1){
+		int col = get_next_column(get_loc_col(LOC_START));
+		dq[idx++] = get_loc(MAP_SIZE_ROW - 1,col);
+		
+		for(int i = MAP_SIZE_ROW - 2; i > -1 ; i--){
+			dq[idx++] = get_loc(i,col);
+			col = get_next_column(get_loc_col(LOC_START));
+			dq[idx++] = get_loc(i,col);
+		}
+		return;
+	}
 }
 
 // loc의 row좌표를 얻어온다
@@ -191,8 +238,13 @@ void update_stat_by_color(void){
 	int col_right = getColorName(cs_right);
 
 	if(col_middle == WHITE){
-		//가운데 컬러 센서 값이 흰색일 경우 길을 벗어남 - CALIBRATION 필요
-		set_stat(OFFROAD,1);
+		// 가운데 컬러 센서 값이 흰색인 경우 :  길을 벗어남 - CALIBRATION 필요
+		// 단, 마지막 목적지에 도착 후 혹은 바깥 쪽 좌표에 도달 후 추가 전진되었을 경우 offroad처리가 되지 않도록 예외 처리가 필요!
+		// GRID_TICK의 수치 조정과 각종 상태 변수를 확인하며 처리
+		/* 
+		code here!
+		 */
+		set_stat(OFFROAD,1);  // offroad 스텟을 on
 	} else{
 		if(!patch){
 			// 가장 최근의 격자좌표 컬러를 저장하는 patch변수에 0이 저장되어 있고 현재 가운데 컬러센서에 빨간 색 혹은 파란색이 인식되었을 때 해당 값을 1 또는 2로 변경한다
@@ -244,6 +296,11 @@ void update_status(void){
 
 				//현재 목표 위치에 도달하였을 경우 - detect 변수의 값이 1, 2, 4 가능
 				if(loc_cur == dq[dq_idx]){
+					// 만약 회귀 중이라면 -> 현재 스코어를 스코어 큐의 값만큼 업데이트 - 자세한 설명은 문서에
+					if (detect == 4){
+						score += score_q[dq_idx];
+					}
+
 					dq_idx = (dq_idx + 1) % DEST_QUEUE_SIZE; // destination queue 의 인덱스를 다음 인덱스 값으로 변경한다 -> 목표 위치 값을 갱신한다
 
 					// 해당 상태(패치 탐색 or 도착점 -> 이동점 이동 or 이동점 -> 출발점 회귀)가 끝난 경우
@@ -384,8 +441,42 @@ void calculate_direction(void){
 
 // 현재 스텟에 따라 다음 행동을 지정하는 함수
 void update_action(void){
+	int detect = get_stat(DETECT);
+	int move = get_stat(MOVE);
 
+	if(get_stat(OFFROAD)){
+		// 길을 미세하게 벗어났을 경우 calibration 하는 코드 - 단, 코드가 길어질 경우 함수로 따로 뺄 것
+		/*
+			code here!
+		*/
+		return;
+	}
 
+	if(move == 2){
+		// 현재 회전 상태일 경우 현재 방향인 dir_cur 가 dir_dest와 같아지도록 회전 - 단, 코드가 길어질 경우 함수로 따로 뺄 것
+		// 단, 현재 방향과 목표 회전 방향이 같을 경우 아무것도 하지 않고 리턴
+		/*
+			code here!
+		*/
+		set_stat(MOVE,1);		// 회전이 끝난 후 move를 직진 상태로 바꾸기
+		move = get_stat(MOVE);
+	}
 
+	if(move == 1){
+		set_motor(SPEED_MAX,SPEED_MAX);
+		return;
+	}
 
+	
+
+	if(!move){
+		set_motor(0,0);
+
+		// detect 가 4이고 move가 0이면 상황 종료
+		if (detect == 4)
+		{
+			//상황 종료
+		}
+		return;
+	}
 }
