@@ -24,7 +24,7 @@
 #define TASK 1 				// 수행 과제 - 1: 1번 과제 | 2: 2번 과제
 #define MAP_SIZE_COL 4		// 맵 격자 가로 크기
 #define MAP_SIZE_ROW 4		// 맵 격자 세로 크기
-#define LOC_START 0 		// 로봇의 시작 위치 정의 - (row,column)좌표값을 MAP_SIZE_ROW * row  + column 로 나타낸다
+#define LOC_START 0 		// 로봇의 시작 위치 정의 - (row,column)좌표값을 MAP_SIZE_COL * row  + column 로 나타낸다
 #define DIR_START 2			// 로봇의 시작 방향 정의 - 1 : 위쪽 | 2: 오른쪽 | 3 : 아래쪽 | 4 : 왼쪽
 #define LOC_DEST 15			// 도착점 좌표
 #define LOC_MOV 15			// 이동점 좌표 - 도착점과 이동점 좌표가 같을 수도 있다
