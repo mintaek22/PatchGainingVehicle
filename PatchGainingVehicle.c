@@ -5,7 +5,7 @@
 #pragma config(Motor, motorC, rm, tmotorEV3_Large, PIDControl, encoder)
 
 #define TICKRATE 20
-#define SPEED_MAX 8
+#define SPEED_MAX 15
 
 //color
 #define BLACK 1
@@ -27,14 +27,14 @@
 #define DIR_START 2
 #define LOC_DEST 15
 #define LOC_MOV 15
-#define GRID_TICK 4
+#define GRID_TICK 1
 #define WARI_DIFF 5
 
 //status
 #define STATUS_SIZE 4
 #define DETECT 0
-#define MOVE 1
-#define ONGRID 2
+#define MOVE 1		// 0 : stop | 1: straint | 2: rotate | 3: ongrid warigari
+#define ONGRID 2	 // 0 : not on grid | 1 : on grid | 2 : on grid warigari | 3 :warigari done
 #define WARIGARI 3   // 0: straignt | 1: left | 2: right
 
 #define DEST_QUEUE_SIZE 20
@@ -44,6 +44,7 @@ int dq[DEST_QUEUE_SIZE];
 int map[MAP_SIZE_ROW][MAP_SIZE_COL];
 int patch = 0;
 int grid_tick = GRID_TICK;
+int ongrid_warigari = 8;
 
 int score_q[DEST_QUEUE_SIZE];
 
@@ -111,6 +112,7 @@ void init_stat(void){
 	for(int i = 0; i<STATUS_SIZE; i++)
 		stat[i] = 0;
 	dir_cur = DIR_START;
+	dir_dest = DIR_START;
 	loc_cur = LOC_START;
 	score = 0;
 	patch = 0;
@@ -210,7 +212,7 @@ void print_map(){
 
 void print_stat(){
 	displayTextLine(1, "det %d mv %d ongrid %d wari %d",get_stat(DETECT), get_stat(MOVE),get_stat(ONGRID),get_stat(WARIGARI));
-	displayTextLine(3, "cur [%d,%d] dir [%d,%d]", get_loc_row(loc_cur), get_loc_col(loc_cur), get_loc_row(dq[dq_idx]), get_loc_col(dq[dq_idx]));
+	displayTextLine(3, "cur [%d,%d] dir [%d,%d] patch %d", get_loc_row(loc_cur), get_loc_col(loc_cur), get_loc_row(dq[dq_idx]), get_loc_col(dq[dq_idx]),patch);
 	displayTextLine(5, "cu %s de %s sc %d",dir_to_text(dir_cur),dir_to_text(dir_dest),score);
 	print_map();
 }
@@ -227,38 +229,52 @@ void update_stat_by_color(void){
 	int col_left = getColorName(cs_left);
 	int col_middle = getColorName(cs_middle);
 	int col_right = getColorName(cs_right);
-
-	if(col_middle == WHITE){
-		int warigari = get_stat(WARIGARI);
-		if(warigari == 2){
-			set_stat(WARIGARI,1);
-		}else{
-			set_stat(WARIGARI,2);
+	if(get_stat(MOVE) != 2 ){
+		if (get_stat(DETECT) && col_middle == WHITE){
+			int warigari = get_stat(WARIGARI);
+			if (warigari == 2){
+				set_stat(WARIGARI, 1);
+			}
+			else{
+				set_stat(WARIGARI, 2);
+			}
 		}
-		
-	} else{
-		set_stat(WARIGARI,0);
-		if(!patch){
-			if(col_middle == RED) patch = 1;
-			if(col_middle == BLUE) patch = 2;
+		else{
+			set_stat(WARIGARI, 0);
+
+			if (col_left != WHITE || col_right != WHITE){
+				if (get_stat(ONGRID) == 0){
+					if (!grid_tick--){
+						set_stat(ONGRID, 1);
+						grid_tick = GRID_TICK;
+					}
+				}
+			}
+
+			if (!patch){
+				if (col_middle == RED)
+					patch = 1;
+				if (col_middle == BLUE)
+					patch = 2;
+			}
+
+			// if(col_left == WHITE && col_right == WHITE){
+			// 	if(get_stat(ONGRID) == 1){
+			// 		if(!grid_tick--){
+			// 			set_stat(ONGRID,2);
+			// 			grid_tick = GRID_TICK;
+			// 			return;
+			// 		}
+
+			// 	}
+			// }else{
+
+			// 	if(get_stat(ONGRID) == 0)
+			// 		set_stat(ONGRID,1);
+			// }
 		}
-
-		// if(col_left == WHITE && col_right == WHITE){
-		// 	if(get_stat(ONGRID) == 1){
-		// 		if(!grid_tick--){
-		// 			set_stat(ONGRID,2);
-		// 			grid_tick = GRID_TICK;
-		// 			return;
-		// 		}
-
-		// 	}
-		// }else{
-
-		// 	if(get_stat(ONGRID) == 0)
-		// 		set_stat(ONGRID,1);
-		// }
-
 	}
+	
 
 
 }
@@ -266,15 +282,23 @@ void update_stat_by_color(void){
 
 void update_status(void){
 		// if (!get_stat(WARIGARI)){
-		if (get_stat(ONGRID) == 2){
+		if (get_stat(ONGRID) == 1){
+			update_loc();
+			set_stat(ONGRID,2);
+			set_stat(MOVE,3);
+			return;
+		}
+		if (get_stat(ONGRID) == 3){
+			
 			int detect = get_stat(DETECT);
 
-			if (detect){
-				update_loc();
+			if (detect == 1){
+				// update_loc();
 				if (detect == 1 && !patch){
 					map[get_loc_row(loc_cur)][get_loc_col(loc_cur)] = patch;
 					patch = 0;
 				}
+
 				if (detect == 4 && TASK == 2){
 					score -= 1;
 				}
@@ -306,6 +330,7 @@ void update_status(void){
 				set_stat(DETECT, 1);
 				return;
 			}
+			set_stat(ONGRID,0);
 		}
 	// }
 }
@@ -425,12 +450,35 @@ void update_action(void){
 		move = get_stat(MOVE);
 		return;
 	}
+	
+	if(move == 3){
+		if(ongrid_warigari-- > 6){
+			set_motor(0.1*SPEED_MAX,-0.1*SPEED_MAX);
+			return;
+		}
+		if(ongrid_warigari-- > 1){
+			set_motor(-0.1*SPEED_MAX,0.1*SPEED_MAX);
+			return;
+		}
+		if(ongrid_warigari-- > -1){
+			set_motor(0.1*SPEED_MAX,-0.1*SPEED_MAX);
+			return;
+		}
+		if(ongrid_warigari < 0){
+			set_stat(MOVE,1);
+			set_stat(ONGRID,3);
+			return;
+		}
+		return;
+	}
 
 	if(move == 1){
 		int warigari = get_stat(WARIGARI);
 		if(warigari == 2){
+			//right
 			set_motor(1.1*SPEED_MAX,0.9*SPEED_MAX);
 		}else if (warigari == 1){
+			//left
 			set_motor(0.9*SPEED_MAX,1.1*SPEED_MAX);
 		}else{
 			set_motor(SPEED_MAX,SPEED_MAX);
