@@ -30,6 +30,8 @@
 #define GRID_TICK_IN 2
 #define GRID_TICK_OUT 10
 #define WARI_DIFF 15
+#define SCORE_RED 1
+#define SCORE_BLU -1
 
 
 //status
@@ -43,6 +45,7 @@
 
 int stat[STATUS_SIZE];
 int dq[DEST_QUEUE_SIZE];
+int dp[MAP_SIZE_ROW*MAP_SIZE_COL];
 int map[MAP_SIZE_ROW][MAP_SIZE_COL];
 int patch = 0;
 int grid_tick_in = GRID_TICK_IN;
@@ -100,6 +103,7 @@ void addq(int value);
 int deleteq(void);
 void dyn(void);
 void make_dq();
+void caculate_map_score(void);
 
 task main()
 {
@@ -161,6 +165,9 @@ void init_map(void){
 void init_dq(void){
 	for(int i = 0; i< DEST_QUEUE_SIZE ; i++){
 		dq[i] = -1;
+	}
+	for(int i = 0; i< MAP_SIZE_ROW*MAP_SIZE_COL ; i++){
+		dp[i] = 0;
 	}
 	dq_idx = 0;
 }
