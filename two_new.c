@@ -7,7 +7,7 @@
 #define LOC_START 0
 #define DIR_START 1
 #define LOC_DEST 15
-#define LOC_MOV 15
+#define LOC_MOV 19
 #define GRID_TICK_IN 2
 #define GRID_TICK_OUT 10
 #define WARI_DIFF 15
@@ -15,9 +15,7 @@
 #define SCORE_BLU -5
 
 
-void insert_array_dq(int index,int data){
-    
-}
+
 
 
 
@@ -27,10 +25,10 @@ void insert_array_dq(int index,int data){
 
 // 0,0 ??? 3,3
 int map[MAP_SIZE_ROW][MAP_SIZE_COL] =
-    {{0, 1, 0, 0},
-     {0, 2, 2, 0},
-     {1, 1, 0, 0},
-     {1, 1, 0, 0}};
+    {{0, 1, 0, 0, 0},
+     {0, 2, 1, 0, 2},
+     {0, 1, 0, 0, 1},
+     {0, 0, 0, 1, 0}};
 int dp[MAP_SIZE_ROW * MAP_SIZE_COL];
 
 int dq[DEST_QUEUE_SIZE] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -38,6 +36,23 @@ int dq[DEST_QUEUE_SIZE] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -
 int front = -1;
 int rear = -1;
 int queue[DEST_QUEUE_SIZE] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+
+
+void insert_array_dq(int index, int data){
+    for(int i = DEST_QUEUE_SIZE - 1 ; i > index ; i--){
+        if(dq[i] == dq[i-1]);
+    }
+    dq[index] = data;
+}
+
+void get_cross(int row, int column){
+    
+}
+
+
+
+
+
 
 //
 int get_loc_row(int loc)
@@ -221,9 +236,11 @@ void make_dq()
             {
                 number = l;
             }
-            else
+            else if (dp[l] < dp[u])
             {
                 number = u;
+            }else{
+
             }
         }
         else if (l < 0)
@@ -261,7 +278,7 @@ int main()
     //     dp[i] = 0;
     // }
     caculate_map_score();
-    // print_map();
+    print_map();
     dyn();
     make_dq();
     // printf("\n");
@@ -274,12 +291,12 @@ int main()
         printf("%d ", dq[i]);
     }
     printf("\n");
-    // printf("dp\n");
-    // for(int i  =0; i< MAP_SIZE_ROW ; i++){
-    //     for(int j = 0; j < MAP_SIZE_COL ; j++){
-    //         printf("%d ",dp[MAP_SIZE_COL * i + j]);
-    //     }
-    //     printf("\n");
-    // }
-    // printf("\n");
+    printf("dp\n");
+    for(int i  =0; i< MAP_SIZE_ROW ; i++){
+        for(int j = 0; j < MAP_SIZE_COL ; j++){
+            printf("%d ",dp[MAP_SIZE_COL * i + j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
 }
