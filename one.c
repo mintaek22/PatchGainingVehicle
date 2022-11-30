@@ -73,10 +73,13 @@ void dyn()
     while (count < MAP_SIZE_COL + MAP_SIZE_ROW - 2) // ??? ??
     {
         int arr[DEST_QUEUE_SIZE];
+        int enqueue_arr[DEST_QUEUE_SIZE];
         for (int i = 0; i < DEST_QUEUE_SIZE; i++)
         {
             arr[i] = -1;
+            enqueue_arr[i] = -1;
         }
+        int enqueue_idx = 0;
         // printf("%d",arr[0]);
         int index = 0;
         while (!IsEmpty())
@@ -84,8 +87,10 @@ void dyn()
             int num = deleteq();
             arr[index] = num;
             index++;
-            //  printf("%d",num);
+            // printf("num ");
+            // printf("%d ",num);
         }
+        // printf("\n");
 
         for (int i = 0; i < DEST_QUEUE_SIZE; i++)
         {
@@ -99,13 +104,24 @@ void dyn()
             }
 
             int number = arr[i];
-            //  printf("%d",number);
+            
             //?????? ???
             if ((number + 1) % MAP_SIZE_COL != 0)
             {
                 int now = number + 1;
-                //  printf("%d",now);
-                addq(now);
+                // printf("number %d now %d\n",number,now);
+
+                int is_add = 1;
+                for(int i = 0; i < enqueue_idx ; i++){
+                    if(enqueue_arr[i] == now){
+                        is_add = 0;
+                        break;
+                    }
+                }
+                if(is_add){
+                    enqueue_arr[enqueue_idx++] = now;
+                }
+                
 
                 if (dp[now] < dp[number] + map[get_loc_row(now)][get_loc_col(now)])
                 {
@@ -117,15 +133,44 @@ void dyn()
             if (number + MAP_SIZE_COL < MAP_SIZE_COL * MAP_SIZE_ROW)
             {
                 int now = number + MAP_SIZE_COL;
-                //  printf("%d",now);
-                addq(now);
+                // printf("number %d now %d\n",number,now);
+
+                int is_add = 1;
+                for(int i = 0; i < enqueue_idx ; i++){
+                    if(enqueue_arr[i] == now){
+                        is_add = 0;
+                        break;
+                    }
+                }
+                if(is_add){
+                    enqueue_arr[enqueue_idx++] = now;
+                }
                 
                 if (dp[now] < dp[number] + map[get_loc_row(now)][get_loc_col(now)])
                 {
                     dp[now] = dp[number] + map[get_loc_row(now)][get_loc_col(now)];
                 }
             }
+            // addq(now);
         }
+
+        for(int i = 0; i< enqueue_idx ; i++){
+            // printf("%d ",enqueue_arr[i]);
+            addq(enqueue_arr[i]);
+        }
+        // printf("\n");
+
+
+        // printf("dp\n");
+        // for (int i = 0; i < MAP_SIZE_ROW; i++)
+        // {
+        //     for (int j = 0; j < MAP_SIZE_COL; j++)
+        //     {
+        //         printf("%d ", dp[MAP_SIZE_COL * i + j]);
+        //     }
+        //     printf("\n");
+        // }
+
 
         count++;
     }
@@ -151,7 +196,7 @@ void make_dq()
     while (index > LOC_START)
     {
         int l = -1, u = -1;
-        if ((index - 1) % MAP_SIZE_COL != 0)
+        if (index % MAP_SIZE_COL != 0)
         {
             l = index - 1;
         }
@@ -182,6 +227,8 @@ void make_dq()
         index = number;
         i++;
     }
+    dq[--i] = LOC_START;
+    dq[++i] = -1;
 }
 
 void caculate_map_score(void){
@@ -198,17 +245,17 @@ void caculate_map_score(void){
 
 int main()
 {
-    for (int i = 0; i < MAP_SIZE_ROW * MAP_SIZE_COL; i++)
-    {
-        dp[i] = 0;
-    }
+    // for (int i = 0; i < MAP_SIZE_ROW * MAP_SIZE_COL; i++)
+    // {
+    //     dp[i] = 0;
+    // }
     caculate_map_score();
+    // print_map();
     dyn();
     make_dq();
-    print_map();
-    printf("\n");
+    // printf("\n");
     
-    print_map();
+    // print_map();
     printf("dq\n");
     for (int i = 0; i < DEST_QUEUE_SIZE; i++)
     {
@@ -216,12 +263,12 @@ int main()
         printf("%d ", dq[i]);
     }
     printf("\n");
-    printf("dp\n");
-    for(int i  =0; i< MAP_SIZE_ROW ; i++){
-        for(int j = 0; j < MAP_SIZE_COL ; j++){
-            printf("%d ",dp[MAP_SIZE_COL * i + j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
+    // printf("dp\n");
+    // for(int i  =0; i< MAP_SIZE_ROW ; i++){
+    //     for(int j = 0; j < MAP_SIZE_COL ; j++){
+    //         printf("%d ",dp[MAP_SIZE_COL * i + j]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
 }
