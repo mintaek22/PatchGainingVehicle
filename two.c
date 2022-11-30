@@ -1,11 +1,11 @@
 #include<stdio.h>
 #define DEST_QUEUE_SIZE 20
 //0,0 ??? 3,3 
-int map[16]={0,1,0,0,
-            0,-1,-1,0,
-            1,1,0,0,
-            1,1,0,0};
-int dp[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int map[20]={0,5,0,0,-5,
+            0,-5,5,0,-5,
+            0,5,0,0,5,
+            0,0,0,5,0};
+int dp[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int dq[DEST_QUEUE_SIZE]={-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 
 int front=-1;
@@ -13,7 +13,7 @@ int rear=-1;
 int queue[DEST_QUEUE_SIZE]={-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 
 int IsEmpty(void){
-    if(front==rear)//front?? rear?? ?????? ??? 
+    if(front==rear)//front?? rear?? gcc ?????? ??? 
         return 1;
     else return 0;
 }
@@ -31,7 +31,7 @@ void dyn() {
     int count=0;
     addq(0);
 
-    while (count<6)    // ??? ?? 
+    while (count<7)    // ??? ?? 
     {
        int arr[10]={-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
        // printf("%d",arr[0]);
@@ -41,13 +41,11 @@ void dyn() {
          int num =deleteq();
          arr[index] = num;
          index++;
-       //  printf("%d",num);
+      //   printf("%d,",num);
        }
+     //    printf("\n");
 
         for(int i=0;i<10;i++){
-             if(count ==1){
-                   // printf("%d",arr[i]);
-                }
             if(arr[i]==-1){
                 break;
             }
@@ -55,7 +53,7 @@ void dyn() {
             int number = arr[i];
            //  printf("%d",number);
             //?????? ???
-            if((number+1)%4 !=0){
+            if((number+1)%5 !=0){
                 int now = number+1;
               //  printf("%d",now);
                 addq(now);
@@ -65,8 +63,8 @@ void dyn() {
             }
 
             //??? ?????
-            if(number+4<16){
-                int now = number+4;
+            if(number+5<20){
+                int now = number+5;
                //  printf("%d",now);
                 addq(now);
                  if(dp[now]<dp[number]+map[now]){
@@ -80,8 +78,8 @@ void dyn() {
 }
 void print_map(){
    for(int i = 0; i< 4 ; i++){
-       printf("%d %d %d %d",dp[4*i],dp[4*i+1],dp[4*i+2],dp[4*i+3]);
-        printf("\n");
+       printf("%d %d %d %d %d",dq[5*i],dq[5*i+1],dq[5*i+2],dq[5*i+3],dq[5*i+4]);
+       printf("\n");
    }
  //sleep(10000);
 }
@@ -89,14 +87,14 @@ void print_map(){
 void make_dq(){
 	int i = 0;
 	int number = 0;
-	int index = 15;
+	int index = 19;
 	while(index>0){
 		int l=-1,u=-1;
-		if((index-1)%4 != 0){
+		if((index-1)%5 != 0){
 			l = index-1;
 		}
-		if(index-4>0){
-			u = index -4;
+		if(index-5>0){
+			u = index -5;
 		}	
 		if(l>0 && u>0){
 			if(dp[l]>dp[u]){
