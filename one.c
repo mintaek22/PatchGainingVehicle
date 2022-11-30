@@ -151,13 +151,13 @@ void make_dq()
     while (index > LOC_START)
     {
         int l = -1, u = -1;
-        if ((index - 1) % MAP_SIZE_ROW != 0)
+        if ((index - 1) % MAP_SIZE_COL != 0)
         {
             l = index - 1;
         }
-        if (index - MAP_SIZE_ROW > 0)
+        if (index - MAP_SIZE_COL > 0)
         {
-            u = index - MAP_SIZE_ROW;
+            u = index - MAP_SIZE_COL;
         }
         if (l > 0 && u > 0)
         {
