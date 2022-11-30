@@ -24,7 +24,7 @@
 #define MAP_SIZE_COL 4
 #define MAP_SIZE_ROW 4
 #define LOC_START 0
-#define DIR_START 2
+#define DIR_START 1
 #define LOC_DEST 15
 #define LOC_MOV 15
 #define GRID_TICK_IN 2
@@ -85,6 +85,8 @@ void update_dq(int ex_stat);
 void update_dq_1(void);
 void update_dq_2(void);
 void calculate_direction(void);
+void turn_left(void);
+void turn_right(void);
 void update_action(void);
 
 task main()
@@ -197,10 +199,10 @@ int get_loc(int row, int col){
 }
 
 char * dir_to_text(int dir){
-	if(dir == 1) return "up";
-	if(dir == 2) return "right";
-	if(dir == 3) return "down";
-	if(dir == 4) return "left";
+	if(dir == 0) return "up";
+	if(dir == 1) return "right";
+	if(dir == 2) return "down";
+	if(dir == 3) return "left";
 	return "err";
 }
 
@@ -332,11 +334,11 @@ void update_status(void){
 }
 
 int get_loc_diff(int dir){
-	if(dir == 4) return -1;
-	if(dir == 2) return 1;
-	if(dir == 1) return -1 * MAP_SIZE_COL;
-	if(dir == 3) return MAP_SIZE_COL;
-	return dir;
+	if(dir == 3) return -1;
+	if(dir == 1) return 1;
+	if(dir == 0) return -1 * MAP_SIZE_COL;
+	if(dir == 2) return MAP_SIZE_COL;
+	return 0;
 }
 
 void update_loc(void){
@@ -430,7 +432,22 @@ void calculate_direction(void){
 		return;
 	}
 }
-
+void turn_left(void)
+{
+	set_motor(-SPEED_MAX, SPEED_MAX);
+	while (getColorName(cs_left) != YELLOW){sleep(TICKRATE);}
+	while (getColorName(cs_middle) != YELLOW){sleep(TICKRATE);}
+	set_stat(WARIGARI,2);
+	set_motor(0, 0);
+}
+void turn_right(void)
+{
+	set_motor(SPEED_MAX, -SPEED_MAX);
+	while (getColorName(cs_right) != YELLOW){sleep(TICKRATE);}
+	while (getColorName(cs_middle) != YELLOW){sleep(TICKRATE);}
+	set_stat(WARIGARI,1);
+	set_motor(0, 0);
+}
 
 void update_action(void){
 	int detect = get_stat(DETECT);
@@ -446,28 +463,24 @@ void update_action(void){
 		{ // 0 rotation
 			return;
 		}
-		else if ((dir_cur + dir_dest) % 2 == 1 && (dir_cur - dir_dest == -1 || 3))
+		if ((dir_cur - dir_dest + 4) % 4 == 3)
 		{ // 90 rotation
-			set_motor(10, -10);
-			sleep(1700);
-			set_motor(0, 0);
+			turn_right();
 		}
-		else if ((dir_cur + dir_dest) % 2 == 1 && (dir_cur - dir_dest == 1 || -3))
+		else if ((dir_cur - dir_dest + 4) % 4 == 1)
 		{ // -90 rotation
-			set_motor(-10, 10);
-			sleep(1700);
-			set_motor(0, 0);
+			turn_left();
 		}
-		else if ((dir_cur + dir_dest) % 2 == 0)
+		else if ((dir_cur - dir_dest + 4) % 4 == 2)
 		{ // 180 rotation
-			set_motor(10, -10);
-			sleep(3300);
-			set_motor(0, 0);
+			turn_right();
+			// dir_cur = (dir_cur + 1)%4;
+			turn_right();
 		}
 		dir_cur = dir_dest;
 		set_stat(MOVE, 1);
 		move = get_stat(MOVE);
-		return;
+		
 	}
 
 	if(move == 3){
@@ -503,7 +516,6 @@ void update_action(void){
 		}else{
 			set_motor(SPEED_MAX,SPEED_MAX);
 		}
-		
 		return;
 	}
 
