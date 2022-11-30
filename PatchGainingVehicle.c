@@ -45,6 +45,7 @@
 
 int stat[STATUS_SIZE];
 int dq[DEST_QUEUE_SIZE];
+int queue[DEST_QUEUE_SIZE];
 int dp[MAP_SIZE_ROW*MAP_SIZE_COL];
 int map[MAP_SIZE_ROW][MAP_SIZE_COL];
 int patch = 0;
@@ -79,7 +80,8 @@ int get_loc_row(int loc);
 int get_loc_col(int loc);
 int get_loc(int row, int col);
 char * dir_to_text(int dir);
-void print_map();
+void print_map(void);
+void print_dq(void);
 void print_stat(void);
 
 
@@ -105,17 +107,17 @@ void dyn(void);
 void make_dq();
 void caculate_map_score(void);
 
+
 task main()
 {
 	init_stat();
 	init_map();
 	init_dq();
 	init_score_q();
-	
+
 	update_dq_detect();
-	for(int i = 0; i<DEST_QUEUE_SIZE ; i++){
-		displayStringAt(i*15,75,"%d", dq[i]);
-	}
+	print_dq();
+
 	sleep(3000);
 	set_stat(MOVE,1);
 
@@ -165,11 +167,19 @@ void init_map(void){
 void init_dq(void){
 	for(int i = 0; i< DEST_QUEUE_SIZE ; i++){
 		dq[i] = -1;
+		queue[i] = -1;
 	}
 	for(int i = 0; i< MAP_SIZE_ROW*MAP_SIZE_COL ; i++){
 		dp[i] = 0;
 	}
 	dq_idx = 0;
+	front = -1;
+    rear = -1;
+
+	for (int i = 0; i < 300; i++)
+	{
+		displayStringAt(i, 75, " ");
+	}
 }
 
 void init_score_q(void){
@@ -236,12 +246,19 @@ void print_map(){
 		}
 	}
 }
+void print_dq(){
+	for (int i = 0; i < DEST_QUEUE_SIZE; i++)
+	{
+		displayStringAt(i * 15, 75, "%d", dq[i]);
+	}
+}
 
 void print_stat(){
 	displayTextLine(1, "det %d mv %d ongrid %d wari %d %d",get_stat(DETECT), get_stat(MOVE),get_stat(ONGRID),get_stat(WARIGARI),wari_diff);
 	displayTextLine(3, "cur[%d,%d]dir[%d,%d] pat%d dq %d", get_loc_row(loc_cur), get_loc_col(loc_cur), get_loc_row(dq[dq_idx]), get_loc_col(dq[dq_idx]),patch,dq_idx);
 	displayTextLine(5, "cu %s de %s sc %d",dir_to_text(dir_cur),dir_to_text(dir_dest),score);
 	print_map();
+	print_dq();
 }
 
 
@@ -350,6 +367,7 @@ void update_status(void){
 					{
 						update_dq(detect);
 						dq_idx = 0;
+						
 					}
 					else if (detect == 4)
 					{
@@ -394,27 +412,26 @@ void update_dq(int ex_stat){
 			update_dq_1();
 			dq_idx = 0;
 			set_stat(DETECT,4);
+			set_stat(MOVE,1);
 		}
 		if(TASK == 2){
 			update_dq_2();
 			dq_idx = 0;
 			set_stat(DETECT,4);
+			set_stat(MOVE,1);
 		}
 	}
 }
 
 
 void update_dq_1(void){
-	/*
-	code here!
-	*/
-	/*
-	for ...
-		dq[somthing] = something
+	init_dq();
+	caculate_map_score();
+    // print_map();
+    dyn();
+    make_dq();
 
 
-	dq[end+1] = -1;
-	*/
 }
 
 
@@ -469,9 +486,9 @@ void turn_left(void)
 {
 	set_motor(-SPEED_MAX, SPEED_MAX);
 	// while (getColorName(cs_left) != YELLOW){sleep(TICKRATE);}
-	sleep(10000/SPEED_MAX);
+	sleep(12000/SPEED_MAX);
 	while (getColorName(cs_middle) != YELLOW){sleep(TICKRATE);}
-	sleep(700/SPEED_MAX);
+	sleep(1200/SPEED_MAX);
 	// set_stat(WARIGARI,2);
 	set_motor(0, 0);
 }
@@ -479,9 +496,9 @@ void turn_right(void)
 {
 	set_motor(SPEED_MAX, -SPEED_MAX);
 	// while (getColorName(cs_right) != YELLOW){sleep(TICKRATE);}
-	sleep(10000/SPEED_MAX);
+	sleep(12000/SPEED_MAX);
 	while (getColorName(cs_middle) != YELLOW){sleep(TICKRATE);}
-	sleep(700/SPEED_MAX);
+	sleep(1200/SPEED_MAX);
 	// set_stat(WARIGARI,1);
 	set_motor(0, 0);
 }
@@ -511,7 +528,7 @@ void update_action(void){
 	if (move == 2)
 	{
 		set_motor(SPEED_MAX,SPEED_MAX);
-		sleep(12000/SPEED_MAX);
+		sleep(11000/SPEED_MAX);
 		if (dir_cur == dir_dest)
 		{ // 0 rotation
 			return;
@@ -539,13 +556,14 @@ void update_action(void){
 
 	if(move == 1){
 		int warigari = get_stat(WARIGARI);
-		
+
 		if(warigari == 2){
 			//right
 			int isreverse = 0;
-			set_motor(-0.8*SPEED_MAX,-0.8*SPEED_MAX);
-			sleep(2000/SPEED_MAX);
+			set_motor(-0.5*SPEED_MAX,-0.5*SPEED_MAX);
+			sleep(400/SPEED_MAX);
 			set_motor(0.8*SPEED_MAX,-0.8*SPEED_MAX);
+			wari_diff = WARI_DIFF;
 			while(getColorName(cs_middle)!=YELLOW){
 				sleep(TICKRATE);
 				if(!wari_diff--){
@@ -555,15 +573,16 @@ void update_action(void){
 				}
 			}
 			if (isreverse){
-				set_motor(-0.5 * SPEED_MAX, 0.5 * SPEED_MAX);
+				set_motor(-0.8 * SPEED_MAX, 0.8 * SPEED_MAX);
 				while(getColorName(cs_middle)!=YELLOW){sleep(TICKRATE);}
 			}
-			sleep(1500/SPEED_MAX);
+			sleep(600/SPEED_MAX);
 		}else if (warigari == 1){
 			int isreverse = 0;
-			set_motor(-0.8*SPEED_MAX,-0.8*SPEED_MAX);
-			sleep(100);
+			set_motor(-0.5*SPEED_MAX,-0.5*SPEED_MAX);
+			sleep(400/SPEED_MAX);
 			set_motor(-0.8*SPEED_MAX, 0.8*SPEED_MAX);
+			wari_diff = WARI_DIFF;
 			while(getColorName(cs_middle)!=YELLOW){
 				sleep(TICKRATE);
 				if(!wari_diff--){
@@ -573,13 +592,13 @@ void update_action(void){
 				}
 			}
 			if (isreverse){
-				set_motor(0.5 * SPEED_MAX, -0.5 * SPEED_MAX);
+				set_motor(0.8 * SPEED_MAX, -0.8 * SPEED_MAX);
 				while(getColorName(cs_middle)!=YELLOW){sleep(TICKRATE);}
 			}
-			sleep(1500/SPEED_MAX);
+			sleep(600/SPEED_MAX);
 		}
 		set_motor(SPEED_MAX,SPEED_MAX);
-		
+
 		return;
 	}
 
@@ -593,4 +612,190 @@ void update_action(void){
 		}
 		return;
 	}
+}
+
+
+int IsEmpty(void)
+{
+    if (front == rear) // front?? rear?? ?????? ???
+        return 1;
+    else
+        return 0;
+}
+void addq(int value)
+{
+    rear = (rear + 1) % DEST_QUEUE_SIZE;
+    queue[rear] = value;
+}
+int deleteq()
+{
+    front = (front + 1) % DEST_QUEUE_SIZE;
+    return queue[front];
+}
+
+// bfs search - dp
+void dyn()
+{
+    int count = 0;
+    addq(0);
+
+    while (count < MAP_SIZE_COL + MAP_SIZE_ROW - 2) // ??? ??
+    {
+        int arr[DEST_QUEUE_SIZE];
+        int enqueue_arr[DEST_QUEUE_SIZE];
+        for (int i = 0; i < DEST_QUEUE_SIZE; i++)
+        {
+            arr[i] = -1;
+            enqueue_arr[i] = -1;
+        }
+        int enqueue_idx = 0;
+        // printf("%d",arr[0]);
+        int index = 0;
+        while (!IsEmpty())
+        {
+            int num = deleteq();
+            arr[index] = num;
+            index++;
+            // printf("num ");
+            // printf("%d ",num);
+        }
+        // printf("\n");
+
+        for (int i = 0; i < DEST_QUEUE_SIZE; i++)
+        {
+            //    if (count == 1)
+            //    {
+            //        // printf("%d",arr[i]);
+            //    }
+            if (arr[i] == -1)
+            {
+                break;
+            }
+
+            int number = arr[i];
+
+            //?????? ???
+            if ((number + 1) % MAP_SIZE_COL != 0)
+            {
+                int now = number + 1;
+                // printf("number %d now %d\n",number,now);
+
+                int is_add = 1;
+                for(int i = 0; i < enqueue_idx ; i++){
+                    if(enqueue_arr[i] == now){
+                        is_add = 0;
+                        break;
+                    }
+                }
+                if(is_add){
+                    enqueue_arr[enqueue_idx++] = now;
+                }
+
+
+                if (dp[now] < dp[number] + map[get_loc_row(now)][get_loc_col(now)])
+                {
+                    dp[now] = dp[number] + map[get_loc_row(now)][get_loc_col(now)];
+                }
+            }
+
+            //??? ?????
+            if (number + MAP_SIZE_COL < MAP_SIZE_COL * MAP_SIZE_ROW)
+            {
+                int now = number + MAP_SIZE_COL;
+                // printf("number %d now %d\n",number,now);
+
+                int is_add = 1;
+                for(int i = 0; i < enqueue_idx ; i++){
+                    if(enqueue_arr[i] == now){
+                        is_add = 0;
+                        break;
+                    }
+                }
+                if(is_add){
+                    enqueue_arr[enqueue_idx++] = now;
+                }
+
+                if (dp[now] < dp[number] + map[get_loc_row(now)][get_loc_col(now)])
+                {
+                    dp[now] = dp[number] + map[get_loc_row(now)][get_loc_col(now)];
+                }
+            }
+            // addq(now);
+        }
+
+        for(int i = 0; i< enqueue_idx ; i++){
+            // printf("%d ",enqueue_arr[i]);
+            addq(enqueue_arr[i]);
+        }
+        // printf("\n");
+
+
+        // printf("dp\n");
+        // for (int i = 0; i < MAP_SIZE_ROW; i++)
+        // {
+        //     for (int j = 0; j < MAP_SIZE_COL; j++)
+        //     {
+        //         printf("%d ", dp[MAP_SIZE_COL * i + j]);
+        //     }
+        //     printf("\n");
+        // }
+
+
+        count++;
+    }
+	score = dp[MAP_SIZE_COL*MAP_SIZE_ROW-1];
+}
+void make_dq()
+{
+    int i = 0;
+    int number = 0;
+    int index = LOC_MOV;
+    while (index > LOC_START)
+    {
+        int l = -1, u = -1;
+        if (index % MAP_SIZE_COL != 0)
+        {
+            l = index - 1;
+        }
+        if (index - MAP_SIZE_COL > 0)
+        {
+            u = index - MAP_SIZE_COL;
+        }
+        if (l > 0 && u > 0)
+        {
+            if (dp[l] > dp[u])
+            {
+                number = l;
+            }
+            else
+            {
+                number = u;
+            }
+        }
+        else if (l < 0)
+        {
+            number = u;
+        }
+        else
+        {
+            number = l;
+        }
+        dq[i] = number;
+        index = number;
+        i++;
+    }
+    dq[--i] = LOC_START;
+    dq[++i] = -1;
+}
+
+void caculate_map_score(void){
+    for(int i  =0; i< MAP_SIZE_ROW ; i++){
+        for(int j = 0; j < MAP_SIZE_COL ; j++){
+            if(map[i][j] == 1){
+                map[i][j] = SCORE_RED;
+            }else if (map[i][j] == 2){
+                map[i][j] = SCORE_BLU;
+            }
+        }
+    }
 }
