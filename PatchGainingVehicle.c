@@ -24,17 +24,18 @@
 #define MAP_SIZE_COL 4
 #define MAP_SIZE_ROW 4
 #define LOC_START 0
-#define DIR_START 2
+#define DIR_START 1
 #define LOC_DEST 15
 #define LOC_MOV 15
-#define GRID_TICK 1
+#define GRID_TICK_IN 2
+#define GRID_TICK_OUT 10
 #define WARI_DIFF 5
 
 //status
 #define STATUS_SIZE 4
 #define DETECT 0
 #define MOVE 1		// 0 : stop | 1: straint | 2: rotate | 3: ongrid warigari
-#define ONGRID 2	 // 0 : not on grid | 1 : on grid | 2 : on grid warigari | 3 :warigari done
+#define ONGRID 2	 // 0 : not on grid | 1 : on grid | 2 : on grid warigari | 3 :warigari done | 4 : grid out wait
 #define WARIGARI 3   // 0: straignt | 1: left | 2: right
 
 #define DEST_QUEUE_SIZE 20
@@ -43,7 +44,8 @@ int stat[STATUS_SIZE];
 int dq[DEST_QUEUE_SIZE];
 int map[MAP_SIZE_ROW][MAP_SIZE_COL];
 int patch = 0;
-int grid_tick = GRID_TICK;
+int grid_tick_in = GRID_TICK_IN;
+int grid_tick_out = GRID_TICK_IN;
 int ongrid_warigari = 8;
 
 int score_q[DEST_QUEUE_SIZE];
@@ -83,6 +85,8 @@ void update_dq(int ex_stat);
 void update_dq_1(void);
 void update_dq_2(void);
 void calculate_direction(void);
+void turn_left(void);
+void turn_right(void);
 void update_action(void);
 
 task main()
@@ -116,7 +120,7 @@ void init_stat(void){
 	loc_cur = LOC_START;
 	score = 0;
 	patch = 0;
-	grid_tick = GRID_TICK;
+	grid_tick_in = GRID_TICK_IN;
 	return;
 }
 
@@ -195,10 +199,10 @@ int get_loc(int row, int col){
 }
 
 char * dir_to_text(int dir){
-	if(dir == 1) return "up";
-	if(dir == 2) return "right";
-	if(dir == 3) return "down";
-	if(dir == 4) return "left";
+	if(dir == 0) return "up";
+	if(dir == 1) return "right";
+	if(dir == 2) return "down";
+	if(dir == 3) return "left";
 	return "err";
 }
 
@@ -242,15 +246,6 @@ void update_stat_by_color(void){
 		else{
 			set_stat(WARIGARI, 0);
 
-			if (col_left != WHITE || col_right != WHITE){
-				if (get_stat(ONGRID) == 0){
-					if (!grid_tick--){
-						set_stat(ONGRID, 1);
-						grid_tick = GRID_TICK;
-					}
-				}
-			}
-
 			if (!patch){
 				if (col_middle == RED)
 					patch = 1;
@@ -258,20 +253,23 @@ void update_stat_by_color(void){
 					patch = 2;
 			}
 
-			// if(col_left == WHITE && col_right == WHITE){
-			// 	if(get_stat(ONGRID) == 1){
-			// 		if(!grid_tick--){
-			// 			set_stat(ONGRID,2);
-			// 			grid_tick = GRID_TICK;
-			// 			return;
-			// 		}
+			if(col_left == WHITE && col_right == WHITE){
+				if(get_stat(ONGRID) == 4){
+					if(!grid_tick_out--){
+						set_stat(ONGRID,0);
+						grid_tick_out = GRID_TICK_OUT;
+						return;
+					}
 
-			// 	}
-			// }else{
-
-			// 	if(get_stat(ONGRID) == 0)
-			// 		set_stat(ONGRID,1);
-			// }
+				}
+			}else{
+				if (get_stat(ONGRID) == 0){
+					if (!grid_tick_in--){
+						set_stat(ONGRID, 1);
+						grid_tick_in = GRID_TICK_IN;
+					}
+				}
+			}
 		}
 	}
 	
@@ -330,17 +328,17 @@ void update_status(void){
 				set_stat(DETECT, 1);
 				return;
 			}
-			set_stat(ONGRID,0);
+			set_stat(ONGRID,4);
 		}
 	// }
 }
 
 int get_loc_diff(int dir){
-	if(dir == 4) return -1;
-	if(dir == 2) return 1;
-	if(dir == 1) return -1 * MAP_SIZE_COL;
-	if(dir == 3) return MAP_SIZE_COL;
-	return dir;
+	if(dir == 3) return -1;
+	if(dir == 1) return 1;
+	if(dir == 0) return -1 * MAP_SIZE_COL;
+	if(dir == 2) return MAP_SIZE_COL;
+	return 0;
 }
 
 void update_loc(void){
@@ -434,39 +432,74 @@ void calculate_direction(void){
 		return;
 	}
 }
-
+void turn_left(void)
+{
+	set_motor(-SPEED_MAX, SPEED_MAX);
+	while (getColorName(cs_left) != YELLOW){sleep(TICKRATE);}
+	while (getColorName(cs_middle) != YELLOW){sleep(TICKRATE);}
+	set_stat(WARIGARI,2);
+	set_motor(0, 0);
+}
+void turn_right(void)
+{
+	set_motor(SPEED_MAX, -SPEED_MAX);
+	while (getColorName(cs_right) != YELLOW){sleep(TICKRATE);}
+	while (getColorName(cs_middle) != YELLOW){sleep(TICKRATE);}
+	set_stat(WARIGARI,1);
+	set_motor(0, 0);
+}
 
 void update_action(void){
 	int detect = get_stat(DETECT);
 	int move = get_stat(MOVE);
 
-	
+	if (move == 2)
+	{
+		int col_left = getColorName(cs_left);
+		int col_middle = getColorName(cs_middle);
+		int col_right = getColorName(cs_right);
 
-	if(move == 2){
-		/*
-			code here!
-		*/
-		set_stat(MOVE,1);
+		if (dir_cur == dir_dest)
+		{ // 0 rotation
+			return;
+		}
+		if ((dir_cur - dir_dest + 4) % 4 == 3)
+		{ // 90 rotation
+			turn_right();
+		}
+		else if ((dir_cur - dir_dest + 4) % 4 == 1)
+		{ // -90 rotation
+			turn_left();
+		}
+		else if ((dir_cur - dir_dest + 4) % 4 == 2)
+		{ // 180 rotation
+			turn_right();
+			// dir_cur = (dir_cur + 1)%4;
+			turn_right();
+		}
+		dir_cur = dir_dest;
+		set_stat(MOVE, 1);
 		move = get_stat(MOVE);
-		return;
+		
 	}
-	
+
 	if(move == 3){
 		if(ongrid_warigari-- > 6){
-			set_motor(0.1*SPEED_MAX,-0.1*SPEED_MAX);
+			set_motor(0.2*SPEED_MAX,-0.2*SPEED_MAX);
 			return;
 		}
 		if(ongrid_warigari-- > 1){
-			set_motor(-0.1*SPEED_MAX,0.1*SPEED_MAX);
+			set_motor(-0.2*SPEED_MAX,0.2*SPEED_MAX);
 			return;
 		}
 		if(ongrid_warigari-- > -1){
-			set_motor(0.1*SPEED_MAX,-0.1*SPEED_MAX);
+			set_motor(0.2*SPEED_MAX,-0.2*SPEED_MAX);
 			return;
 		}
 		if(ongrid_warigari < 0){
 			set_stat(MOVE,1);
 			set_stat(ONGRID,3);
+			ongrid_warigari = 8;
 			return;
 		}
 		return;
@@ -476,14 +509,13 @@ void update_action(void){
 		int warigari = get_stat(WARIGARI);
 		if(warigari == 2){
 			//right
-			set_motor(1.1*SPEED_MAX,0.9*SPEED_MAX);
+			set_motor(1.2*SPEED_MAX,0.8*SPEED_MAX);
 		}else if (warigari == 1){
 			//left
-			set_motor(0.9*SPEED_MAX,1.1*SPEED_MAX);
+			set_motor(0.8*SPEED_MAX,1.2*SPEED_MAX);
 		}else{
 			set_motor(SPEED_MAX,SPEED_MAX);
 		}
-		
 		return;
 	}
 
