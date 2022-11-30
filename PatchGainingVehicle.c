@@ -5,7 +5,7 @@
 #pragma config(Motor, motorC, rm, tmotorEV3_Large, PIDControl, encoder)
 
 #define TICKRATE 20
-#define SPEED_MAX 20
+#define SPEED_MAX 30
 
 //color
 #define BLACK 1
@@ -454,7 +454,7 @@ void turn_left(void)
 	// while (getColorName(cs_left) != YELLOW){sleep(TICKRATE);}
 	sleep(10000/SPEED_MAX);
 	while (getColorName(cs_middle) != YELLOW){sleep(TICKRATE);}
-	sleep(1000/SPEED_MAX);
+	sleep(700/SPEED_MAX);
 	// set_stat(WARIGARI,2);
 	set_motor(0, 0);
 }
@@ -464,7 +464,7 @@ void turn_right(void)
 	// while (getColorName(cs_right) != YELLOW){sleep(TICKRATE);}
 	sleep(10000/SPEED_MAX);
 	while (getColorName(cs_middle) != YELLOW){sleep(TICKRATE);}
-	sleep(1000/SPEED_MAX);
+	sleep(700/SPEED_MAX);
 	// set_stat(WARIGARI,1);
 	set_motor(0, 0);
 }
@@ -527,7 +527,7 @@ void update_action(void){
 			//right
 			int isreverse = 0;
 			set_motor(-0.8*SPEED_MAX,-0.8*SPEED_MAX);
-			sleep(100);
+			sleep(2000/SPEED_MAX);
 			set_motor(0.8*SPEED_MAX,-0.8*SPEED_MAX);
 			while(getColorName(cs_middle)!=YELLOW){
 				sleep(TICKRATE);
