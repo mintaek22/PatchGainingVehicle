@@ -1,6 +1,6 @@
-#pragma config(Sensor, S1, c1, sensorEV3_Color, modeEV3Color_Color)
-#pragma config(Sensor, S4, c2, sensorEV3_Color, modeEV3Color_Color)
-#pragma config(Sensor, S3, c3, sensorEV3_Color, modeEV3Color_Color)
+#pragma config(Sensor, S1, cs_left, sensorEV3_Color, modeEV3Color_Color)
+#pragma config(Sensor, S4, cs_middle, sensorEV3_Color, modeEV3Color_Color)
+#pragma config(Sensor, S3, cs_right, sensorEV3_Color, modeEV3Color_Color)
 #pragma config(Motor, motorB, lm, tmotorEV3_Large, PIDControl, encoder)
 #pragma config(Motor, motorC, rm, tmotorEV3_Large, PIDControl, encoder)
 #define DIFF 10
@@ -24,7 +24,7 @@ void stopMotor()
 void go()
 {
    val=5;
-   if(getColorName(c2)==4)
+   if(getColorName(cs_middle)==4)
    {
       setMotorSpeed(lm,nMotorSpeedSetting - val);
       setMotorSpeed(rm,nMotorSpeedSetting + val);
@@ -34,11 +34,11 @@ void go()
       setMotorSpeed(rm,nMotorSpeedSetting - val);
    }
    if(row%2==1 || row==4){
-      if(getColorName(c1)==4)vertex++;
+      if(getColorName(cs_left)==4)vertex++;
       else vertex = 0;
    }
    else{
-      if(getColorName(c3)==4) vertex++;
+      if(getColorName(cs_right)==4) vertex++;
       else vertex=0;
    }
    if(vertex == 1 && count!=4) {
@@ -47,7 +47,7 @@ void go()
      sleep(100);
      stopMotor();
      sleep(1000);
-     int color =getColorName(c2);
+     int color =getColorName(cs_middle);
      if(color == 5)
      {
         li[row][count]=1;
@@ -66,12 +66,12 @@ void turnLeft()
    setMotorSpeed(lm,30);
    setMotorSpeed(rm,30);
    sleep(100);
-   while(getColorName(c1)>4){
+   while(getColorName(cs_left)>4){
       setMotorSpeed(lm,-nMotorSpeedSetting*6/10);
       setMotorSpeed(rm,nMotorSpeedSetting*6/10);
       sleep(10);
    }
-   while(getColorName(c2)>4){
+   while(getColorName(cs_middle)>4){
       setMotorSpeed(lm,-nMotorSpeedSetting*6/10);
       setMotorSpeed(rm,nMotorSpeedSetting*6/10);
       sleep(10);
@@ -87,12 +87,12 @@ void turnRight()
    setMotorSpeed(lm,30);
    setMotorSpeed(rm,30);
    sleep(100);
-   while(getColorName(c3)>4){
+   while(getColorName(cs_right)>4){
       setMotorSpeed(lm,nMotorSpeedSetting*6/10);
       setMotorSpeed(rm,-nMotorSpeedSetting*6/10);
       sleep(10);
    }
-   while(getColorName(c2)>4){
+   while(getColorName(cs_middle)>4){
       setMotorSpeed(lm,nMotorSpeedSetting*6/10);
       setMotorSpeed(rm,-nMotorSpeedSetting*6/10);
       sleep(10);
@@ -129,7 +129,7 @@ void completeSearch()
 
          if(row%2==0)
          {
-            while(getColorName(c3) == 6) go();
+            while(getColorName(cs_right) == 6) go();
             setMotorSpeed(lm,35);
             setMotorSpeed(rm,30);
             sleep(400);
@@ -137,7 +137,7 @@ void completeSearch()
          }
          else
          {
-            while(getColorName(c1)==6)go();
+            while(getColorName(cs_left)==6)go();
             setMotorSpeed(lm,30);
             setMotorSpeed(rm,35);
             sleep(400);

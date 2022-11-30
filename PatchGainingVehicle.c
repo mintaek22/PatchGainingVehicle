@@ -28,13 +28,14 @@
 #define LOC_DEST 15
 #define LOC_MOV 15
 #define GRID_TICK 4
+#define WARI_DIFF 5
 
 //status
 #define STATUS_SIZE 4
 #define DETECT 0
 #define MOVE 1
 #define ONGRID 2
-#define OFFROAD 3
+#define WARIGARI 3   // 0: straignt | 1: left | 2: right
 
 #define DEST_QUEUE_SIZE 20
 
@@ -208,8 +209,8 @@ void print_map(){
 }
 
 void print_stat(){
-	displayTextLine(1, "det %d mv %d of %d",get_stat(DETECT), get_stat(MOVE),get_stat(OFFROAD));
-	displayTextLine(3, "[%d,%d] [%d,%d]", get_loc_row(loc_cur), get_loc_col(loc_cur), get_loc_row(dq[dq_idx]), get_loc_col(dq[dq_idx]));
+	displayTextLine(1, "det %d mv %d ongrid %d wari %d",get_stat(DETECT), get_stat(MOVE),get_stat(ONGRID),get_stat(WARIGARI));
+	displayTextLine(3, "cur [%d,%d] dir [%d,%d]", get_loc_row(loc_cur), get_loc_col(loc_cur), get_loc_row(dq[dq_idx]), get_loc_col(dq[dq_idx]));
 	displayTextLine(5, "cu %s de %s sc %d",dir_to_text(dir_cur),dir_to_text(dir_dest),score);
 	print_map();
 }
@@ -228,30 +229,34 @@ void update_stat_by_color(void){
 	int col_right = getColorName(cs_right);
 
 	if(col_middle == WHITE){
-		/*
-		code here!
-		 */
-		set_stat(OFFROAD,1);
+		int warigari = get_stat(WARIGARI);
+		if(warigari == 2){
+			set_stat(WARIGARI,1);
+		}else{
+			set_stat(WARIGARI,2);
+		}
+		
 	} else{
+		set_stat(WARIGARI,0);
 		if(!patch){
 			if(col_middle == RED) patch = 1;
 			if(col_middle == BLUE) patch = 2;
 		}
 
-		if(col_left == WHITE && col_right == WHITE){
-			if(get_stat(ONGRID) == 1){
-				if(!grid_tick--){
-					set_stat(ONGRID,2);
-					grid_tick = GRID_TICK;
-					return;
-				}
+		// if(col_left == WHITE && col_right == WHITE){
+		// 	if(get_stat(ONGRID) == 1){
+		// 		if(!grid_tick--){
+		// 			set_stat(ONGRID,2);
+		// 			grid_tick = GRID_TICK;
+		// 			return;
+		// 		}
 
-			}
-		}else{
+		// 	}
+		// }else{
 
-			if(get_stat(ONGRID) == 0)
-				set_stat(ONGRID,1);
-		}
+		// 	if(get_stat(ONGRID) == 0)
+		// 		set_stat(ONGRID,1);
+		// }
 
 	}
 
@@ -260,7 +265,7 @@ void update_stat_by_color(void){
 
 
 void update_status(void){
-		// if (!get_stat(OFFROAD)){
+		// if (!get_stat(WARIGARI)){
 		if (get_stat(ONGRID) == 2){
 			int detect = get_stat(DETECT);
 
@@ -410,12 +415,7 @@ void update_action(void){
 	int detect = get_stat(DETECT);
 	int move = get_stat(MOVE);
 
-	if(get_stat(OFFROAD)){
-		/*
-			code here!
-		*/
-		return;
-	}
+	
 
 	if(move == 2){
 		/*
@@ -423,10 +423,19 @@ void update_action(void){
 		*/
 		set_stat(MOVE,1);
 		move = get_stat(MOVE);
+		return;
 	}
 
 	if(move == 1){
-		set_motor(SPEED_MAX,SPEED_MAX);
+		int warigari = get_stat(WARIGARI);
+		if(warigari == 2){
+			set_motor(1.1*SPEED_MAX,0.9*SPEED_MAX);
+		}else if (warigari == 1){
+			set_motor(0.9*SPEED_MAX,1.1*SPEED_MAX);
+		}else{
+			set_motor(SPEED_MAX,SPEED_MAX);
+		}
+		
 		return;
 	}
 
