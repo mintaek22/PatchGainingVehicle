@@ -61,6 +61,8 @@ int loc_cur = LOC_START;
 
 int score = 0;
 
+int front=-1;
+int rear=-1;
 
 void init_stat(void);
 int get_stat(int index);
@@ -90,6 +92,14 @@ void calculate_direction(void);
 void turn_left(void);
 void turn_right(void);
 void update_action(void);
+
+
+//alg 1
+int IsEmpty(void);
+void addq(int value);
+int deleteq(void);
+void dyn(void);
+void make_dq();
 
 task main()
 {
