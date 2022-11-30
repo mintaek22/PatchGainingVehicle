@@ -4,8 +4,8 @@
 #pragma config(Motor, motorB, lm, tmotorEV3_Large, PIDControl, encoder)
 #pragma config(Motor, motorC, rm, tmotorEV3_Large, PIDControl, encoder)
 
-#define TICKRATE 20		
-#define SPEED_MAX 8 
+#define TICKRATE 20
+#define SPEED_MAX 8
 
 //color
 #define BLACK 1
@@ -20,40 +20,40 @@
 
 
 // changing vars
-#define TASK 1 				
-#define MAP_SIZE_COL 4		
-#define MAP_SIZE_ROW 4		
-#define LOC_START 0 
-#define DIR_START 2		
-#define LOC_DEST 15	
-#define LOC_MOV 15	
-#define GRID_TICK 4 
+#define TASK 1
+#define MAP_SIZE_COL 4
+#define MAP_SIZE_ROW 4
+#define LOC_START 0
+#define DIR_START 2
+#define LOC_DEST 15
+#define LOC_MOV 15
+#define GRID_TICK 4
 
 //status
-#define STATUS_SIZE 4		
-#define DETECT 0			
-#define MOVE 1 				
-#define ONGRID 2			
-#define OFFROAD 3			
+#define STATUS_SIZE 4
+#define DETECT 0
+#define MOVE 1
+#define ONGRID 2
+#define OFFROAD 3
 
-#define DEST_QUEUE_SIZE 20 	
+#define DEST_QUEUE_SIZE 20
 
 int stat[STATUS_SIZE];
-int dq[DEST_QUEUE_SIZE]; 	
-int map[MAP_SIZE_ROW][MAP_SIZE_COL]; 
-int patch = 0; 				
+int dq[DEST_QUEUE_SIZE];
+int map[MAP_SIZE_ROW][MAP_SIZE_COL];
+int patch = 0;
 int grid_tick = GRID_TICK;
 
-int score_q[DEST_QUEUE_SIZE];	
+int score_q[DEST_QUEUE_SIZE];
 
 int dq_idx = 0;
 
-int dir_cur = DIR_START;			
-int dir_dest = DIR_START;			
+int dir_cur = DIR_START;
+int dir_dest = DIR_START;
 
-int loc_cur = LOC_START;	
+int loc_cur = LOC_START;
 
-int score = 0;				
+int score = 0;
 
 
 void init_stat(void);
@@ -68,7 +68,7 @@ int get_loc_row(int loc);
 int get_loc_col(int loc);
 int get_loc(int row, int col);
 char * dir_to_text(int dir);
-void print_map(int startline);
+void print_map();
 void print_stat(void);
 
 
@@ -89,8 +89,8 @@ task main()
 	init_map();
 	init_dq();
 	init_score_q();
-	sleep(3000); 
-	update_dq_detect(); 
+	sleep(3000);
+	update_dq_detect();
 	set_stat(MOVE,1);
 
 	while(1){
@@ -109,7 +109,7 @@ task main()
 void init_stat(void){
 	for(int i = 0; i<STATUS_SIZE; i++)
 		stat[i] = 0;
-	dir_cur = DIR_START; 
+	dir_cur = DIR_START;
 	loc_cur = LOC_START;
 	score = 0;
 	patch = 0;
@@ -199,22 +199,19 @@ char * dir_to_text(int dir){
 	return "err";
 }
 
-void print_map(int startline){
-	for(int i = 0; i< MAP_SIZE_ROW ; i++){
-		displayBigTextLine(startline+ i*2,"%d %d %d %d ",map[i][0],map[i][1],map[i][2],map[i][3]);
-		//for(int j = 0; j< MAP_SIZE_COL ; j++){
-
-			//displayBigTextLine(startline+ i*2,"%s %s %s %s ", map[i][j] == 0 ? "+" :(map[i][j] == 1 ? "O" : "X"));
-			//displayBigStringAt(startline+i, 2 * j, map[i][j] == 0 ? "+" :(map[i][j] == 1 ? "O" : "X"));
-		//}
+void print_map(){
+	for(int i = 0; i<MAP_SIZE_ROW ; i++){
+		for(int j = 0; j< MAP_SIZE_COL ; j++){
+			displayStringAt(j*15,(MAP_SIZE_ROW-i)*15, map[i][j] == 0 ? "+" :(map[i][j] == 1 ? "O" : "X"));
+		}
 	}
 }
 
 void print_stat(){
-	displayBigTextLine(1, "det %d mv %d of %d",get_stat(DETECT), get_stat(MOVE),get_stat(OFFROAD));
-	displayBigTextLine(3, "[%d,%d] [%d,%d]", get_loc_row(loc_cur), get_loc_col(loc_cur), get_loc_row(dq[dq_idx]), get_loc_col(dq[dq_idx]));
-	displayBigTextLine(5, "cu %s de %s sc %d",dir_to_text(dir_cur),dir_to_text(dir_dest),score);
-	print_map(8);
+	displayTextLine(1, "det %d mv %d of %d",get_stat(DETECT), get_stat(MOVE),get_stat(OFFROAD));
+	displayTextLine(3, "[%d,%d] [%d,%d]", get_loc_row(loc_cur), get_loc_col(loc_cur), get_loc_row(dq[dq_idx]), get_loc_col(dq[dq_idx]));
+	displayTextLine(5, "cu %s de %s sc %d",dir_to_text(dir_cur),dir_to_text(dir_dest),score);
+	print_map();
 }
 
 
@@ -225,7 +222,7 @@ void set_motor(int left_speed, int right_speed){
 
 
 void update_stat_by_color(void){
-	
+
 	int col_left = getColorName(cs_left);
 	int col_middle = getColorName(cs_middle);
 	int col_right = getColorName(cs_right);
@@ -234,13 +231,13 @@ void update_stat_by_color(void){
 		/*
 		code here!
 		 */
-		set_stat(OFFROAD,1);  
+		set_stat(OFFROAD,1);
 	} else{
 		if(!patch){
 			if(col_middle == RED) patch = 1;
 			if(col_middle == BLUE) patch = 2;
 		}
-		
+
 		if(col_left == WHITE && col_right == WHITE){
 			if(get_stat(ONGRID) == 1){
 				if(!grid_tick--){
@@ -251,7 +248,7 @@ void update_stat_by_color(void){
 
 			}
 		}else{
-			
+
 			if(get_stat(ONGRID) == 0)
 				set_stat(ONGRID,1);
 		}
@@ -268,40 +265,40 @@ void update_status(void){
 			int detect = get_stat(DETECT);
 
 			if (detect){
-				update_loc(); 
+				update_loc();
 				if (detect == 1 && !patch){
-					map[get_loc_row(loc_cur)][get_loc_col(loc_cur)] = patch; 
-					patch = 0;												 
+					map[get_loc_row(loc_cur)][get_loc_col(loc_cur)] = patch;
+					patch = 0;
 				}
 				if (detect == 4 && TASK == 2){
 					score -= 1;
 				}
 
 				if(loc_cur == dq[dq_idx]){
-				
+
 					if (detect == 4){
 						score += score_q[dq_idx];
 					}
 
-					dq_idx = (dq_idx + 1) % DEST_QUEUE_SIZE; 
+					dq_idx = (dq_idx + 1) % DEST_QUEUE_SIZE;
 					if(dq[dq_idx] == -1){
 						if(detect == 1 || detect == 2){
-							update_dq(detect); 	
-							dq_idx = 0; 	
+							update_dq(detect);
+							dq_idx = 0;
 						}else if(detect == 4){
-							
-							set_stat(MOVE,0); 
+
+							set_stat(MOVE,0);
 							return;
-							
+
 						}
 					}
 
-					calculate_direction();  
+					calculate_direction();
 				}
 			}
 			else
 			{
-				set_stat(DETECT, 1); 
+				set_stat(DETECT, 1);
 				return;
 			}
 		}
@@ -323,14 +320,14 @@ void update_loc(void){
 void update_dq(int ex_stat){
 
 	if(ex_stat == 1){
-		dq[0] = LOC_MOV;	
-		dq[1] = -1;			
-		set_stat(DETECT,2); 
+		dq[0] = LOC_MOV;
+		dq[1] = -1;
+		set_stat(DETECT,2);
 	}
 	if(ex_stat == 2){
-		set_stat(DETECT,3); 
+		set_stat(DETECT,3);
 		set_stat(MOVE,0);
-		set_motor(0,0); 	
+		set_motor(0,0);
 
 		if(TASK == 1){
 			update_dq_1();
@@ -340,7 +337,7 @@ void update_dq(int ex_stat){
 		if(TASK == 2){
 			update_dq_2();
 			dq_idx = 0;
-			set_stat(DETECT,4); 
+			set_stat(DETECT,4);
 		}
 	}
 }
@@ -355,7 +352,7 @@ void update_dq_1(void){
 		dq[somthing] = something
 
 
-	dq[end+1] = -1;   
+	dq[end+1] = -1;
 	*/
 }
 
@@ -369,39 +366,39 @@ void update_dq_2(void){
 		dq[somthing] = something
 
 
-	dq[end+1] = -1;  
+	dq[end+1] = -1;
 	*/
 }
 
 void calculate_direction(void){
 	int dest = dq[dq_idx];
 
-	
+
 	if(get_loc_row(loc_cur) == get_loc_row(dest)){
 		if(get_loc_col(dest) > get_loc_col(loc_cur)){
-			dir_dest = 2;  		
-			set_stat(MOVE,2); 
+			dir_dest = 2;
+			set_stat(MOVE,2);
 			return;
 		}
 		if(get_loc_col(dest) < get_loc_col(loc_cur)){
-			dir_dest = 4;  		
-			set_stat(MOVE,2); 
+			dir_dest = 4;
+			set_stat(MOVE,2);
 			return;
 		}
 		return;
 	}
 
 	if(get_loc_col(loc_cur) == get_loc_col(dest)){
-		
+
 		if(get_loc_row(dest) > get_loc_row(loc_cur)){
-			dir_dest = 3;  		
-			set_stat(MOVE,2); 	
+			dir_dest = 3;
+			set_stat(MOVE,2);
 			return;
 		}
-		
+
 		if(get_loc_col(dest) < get_loc_col(loc_cur)){
-			dir_dest = 1;  		
-			set_stat(MOVE,2); 	
+			dir_dest = 1;
+			set_stat(MOVE,2);
 			return;
 		}
 		return;
@@ -424,7 +421,7 @@ void update_action(void){
 		/*
 			code here!
 		*/
-		set_stat(MOVE,1);		
+		set_stat(MOVE,1);
 		move = get_stat(MOVE);
 	}
 
@@ -439,7 +436,7 @@ void update_action(void){
 		set_motor(0,0);
 		if (detect == 4)
 		{
-			
+
 		}
 		return;
 	}
