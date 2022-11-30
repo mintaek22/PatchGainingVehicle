@@ -27,14 +27,15 @@
 #define DIR_START 2
 #define LOC_DEST 15
 #define LOC_MOV 15
-#define GRID_TICK 1
+#define GRID_TICK_IN 2
+#define GRID_TICK_OUT 10
 #define WARI_DIFF 5
 
 //status
 #define STATUS_SIZE 4
 #define DETECT 0
 #define MOVE 1		// 0 : stop | 1: straint | 2: rotate | 3: ongrid warigari
-#define ONGRID 2	 // 0 : not on grid | 1 : on grid | 2 : on grid warigari | 3 :warigari done
+#define ONGRID 2	 // 0 : not on grid | 1 : on grid | 2 : on grid warigari | 3 :warigari done | 4 : grid out wait
 #define WARIGARI 3   // 0: straignt | 1: left | 2: right
 
 #define DEST_QUEUE_SIZE 20
@@ -43,7 +44,8 @@ int stat[STATUS_SIZE];
 int dq[DEST_QUEUE_SIZE];
 int map[MAP_SIZE_ROW][MAP_SIZE_COL];
 int patch = 0;
-int grid_tick = GRID_TICK;
+int grid_tick_in = GRID_TICK_IN;
+int grid_tick_out = GRID_TICK_IN;
 int ongrid_warigari = 8;
 
 int score_q[DEST_QUEUE_SIZE];
@@ -116,7 +118,7 @@ void init_stat(void){
 	loc_cur = LOC_START;
 	score = 0;
 	patch = 0;
-	grid_tick = GRID_TICK;
+	grid_tick_in = GRID_TICK_IN;
 	return;
 }
 
@@ -242,15 +244,6 @@ void update_stat_by_color(void){
 		else{
 			set_stat(WARIGARI, 0);
 
-			if (col_left != WHITE || col_right != WHITE){
-				if (get_stat(ONGRID) == 0){
-					if (!grid_tick--){
-						set_stat(ONGRID, 1);
-						grid_tick = GRID_TICK;
-					}
-				}
-			}
-
 			if (!patch){
 				if (col_middle == RED)
 					patch = 1;
@@ -258,20 +251,23 @@ void update_stat_by_color(void){
 					patch = 2;
 			}
 
-			// if(col_left == WHITE && col_right == WHITE){
-			// 	if(get_stat(ONGRID) == 1){
-			// 		if(!grid_tick--){
-			// 			set_stat(ONGRID,2);
-			// 			grid_tick = GRID_TICK;
-			// 			return;
-			// 		}
+			if(col_left == WHITE && col_right == WHITE){
+				if(get_stat(ONGRID) == 4){
+					if(!grid_tick_out--){
+						set_stat(ONGRID,0);
+						grid_tick_out = GRID_TICK_OUT;
+						return;
+					}
 
-			// 	}
-			// }else{
-
-			// 	if(get_stat(ONGRID) == 0)
-			// 		set_stat(ONGRID,1);
-			// }
+				}
+			}else{
+				if (get_stat(ONGRID) == 0){
+					if (!grid_tick_in--){
+						set_stat(ONGRID, 1);
+						grid_tick_in = GRID_TICK_IN;
+					}
+				}
+			}
 		}
 	}
 	
@@ -330,7 +326,7 @@ void update_status(void){
 				set_stat(DETECT, 1);
 				return;
 			}
-			set_stat(ONGRID,0);
+			set_stat(ONGRID,4);
 		}
 	// }
 }
@@ -453,20 +449,21 @@ void update_action(void){
 	
 	if(move == 3){
 		if(ongrid_warigari-- > 6){
-			set_motor(0.1*SPEED_MAX,-0.1*SPEED_MAX);
+			set_motor(0.2*SPEED_MAX,-0.2*SPEED_MAX);
 			return;
 		}
 		if(ongrid_warigari-- > 1){
-			set_motor(-0.1*SPEED_MAX,0.1*SPEED_MAX);
+			set_motor(-0.2*SPEED_MAX,0.2*SPEED_MAX);
 			return;
 		}
 		if(ongrid_warigari-- > -1){
-			set_motor(0.1*SPEED_MAX,-0.1*SPEED_MAX);
+			set_motor(0.2*SPEED_MAX,-0.2*SPEED_MAX);
 			return;
 		}
 		if(ongrid_warigari < 0){
 			set_stat(MOVE,1);
 			set_stat(ONGRID,3);
+			ongrid_warigari = 8;
 			return;
 		}
 		return;
@@ -476,10 +473,10 @@ void update_action(void){
 		int warigari = get_stat(WARIGARI);
 		if(warigari == 2){
 			//right
-			set_motor(1.1*SPEED_MAX,0.9*SPEED_MAX);
+			set_motor(1.2*SPEED_MAX,0.8*SPEED_MAX);
 		}else if (warigari == 1){
 			//left
-			set_motor(0.9*SPEED_MAX,1.1*SPEED_MAX);
+			set_motor(0.8*SPEED_MAX,1.2*SPEED_MAX);
 		}else{
 			set_motor(SPEED_MAX,SPEED_MAX);
 		}
