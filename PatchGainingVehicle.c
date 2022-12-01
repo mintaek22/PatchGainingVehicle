@@ -5,7 +5,7 @@
 #pragma config(Motor, motorC, rm, tmotorEV3_Large, PIDControl, encoder)
 
 #define TICKRATE 20
-#define SPEED_MAX 30
+#define SPEED_MAX 20
 
 //color
 #define BLACK 1
