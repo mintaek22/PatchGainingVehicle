@@ -5,7 +5,7 @@
 #pragma config(Motor, motorC, rm, tmotorEV3_Large, PIDControl, encoder)
 
 #define TICKRATE 20
-#define SPEED_MAX 14
+#define SPEED_MAX 25
 
 //color
 #define BLACK 1
@@ -547,10 +547,11 @@ void update_action(void){
 	{
 		set_motor(SPEED_MAX,SPEED_MAX);
 		sleep(11000/SPEED_MAX);
-		if (dir_cur == dir_dest)
-		{ // 0 rotation
-			return;
-		}
+		// if (dir_cur == dir_dest)
+		// { // 0 rotation
+
+		// 	return;
+		// }
 		if ((dir_cur - dir_dest + 4) % 4 == 3)
 		{ // 90 rotation
 			turn_right();
@@ -578,8 +579,8 @@ void update_action(void){
 		if(warigari == 2){
 			//right
 			int isreverse = 0;
-			set_motor(-0.5*SPEED_MAX,-0.5*SPEED_MAX);
-			sleep(400/SPEED_MAX);
+			// set_motor(-0.8*SPEED_MAX,-0.8*SPEED_MAX);
+			// sleep(400/SPEED_MAX);
 			set_motor(0.8*SPEED_MAX,-0.8*SPEED_MAX);
 			wari_diff = WARI_DIFF;
 			while(getColorName(cs_middle)!=YELLOW){
@@ -597,8 +598,8 @@ void update_action(void){
 			sleep(600/SPEED_MAX);
 		}else if (warigari == 1){
 			int isreverse = 0;
-			set_motor(-0.5*SPEED_MAX,-0.5*SPEED_MAX);
-			sleep(400/SPEED_MAX);
+			// set_motor(-0.8*SPEED_MAX,-0.8*SPEED_MAX);
+			// sleep(400/SPEED_MAX);
 			set_motor(-0.8*SPEED_MAX, 0.8*SPEED_MAX);
 			wari_diff = WARI_DIFF;
 			while(getColorName(cs_middle)!=YELLOW){
