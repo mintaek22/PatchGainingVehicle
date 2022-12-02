@@ -20,18 +20,18 @@
 
 
 // changing vars
-#define TASK 1
-#define MAP_SIZE_COL 4
+#define TASK 2
+#define MAP_SIZE_COL 5
 #define MAP_SIZE_ROW 4
 #define LOC_START 0
 #define DIR_START 1
-#define LOC_DEST 15
-#define LOC_MOV 15
+#define LOC_DEST 19
+#define LOC_MOV 19
 #define GRID_TICK_IN 2
 #define GRID_TICK_OUT 10
 #define WARI_DIFF 15
-#define SCORE_RED 1
-#define SCORE_BLU -1
+#define SCORE_RED 5
+#define SCORE_BLU -5
 
 
 //status
@@ -258,7 +258,12 @@ char * dir_to_text(int dir){
 void print_map(){
 	for(int i = 0; i<MAP_SIZE_ROW ; i++){
 		for(int j = 0; j< MAP_SIZE_COL ; j++){
-			displayStringAt(j*15,(MAP_SIZE_ROW-i)*15, map[i][j] == 0 ? "+" :(map[i][j] == 1 ? "O" : "X"));
+			if(get_stat(DETECT)==4){
+				displayStringAt(j*15,(MAP_SIZE_ROW-i)*15, "%d", map[i][j]);
+			}
+			else{
+				displayStringAt(j*15,(MAP_SIZE_ROW-i)*15, map[i][j] == 0 ? "+" :(map[i][j] == 1 ? "O" : "X"));
+			}
 		}
 	}
 }
