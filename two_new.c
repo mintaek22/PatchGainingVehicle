@@ -17,9 +17,9 @@
 
 
 
-
-
-
+int get_loc_row(int loc);
+int get_loc_col(int loc);
+int get_loc(int row, int col);
 
 
 
@@ -38,6 +38,22 @@ int rear = -1;
 int queue[DEST_QUEUE_SIZE] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
 
+int red_list[DEST_QUEUE_SIZE] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+// int red_list[DEST_QUEUE_SIZE];
+int red_index = 0;
+
+
+
+void find_red(void){
+    for(int i = 0 ; i < MAP_SIZE_ROW ; i++){
+        for(int j = 0 ; j < MAP_SIZE_ROW ; j++){
+            if(map[i][j] == 1){
+                red_list[red_index++] = get_loc(i,j);
+            }
+        }
+    }
+}
+
 void insert_array_dq(int index, int data){
     for(int i = DEST_QUEUE_SIZE - 1 ; i > index ; i--){
         if(dq[i] == dq[i-1]);
@@ -45,12 +61,64 @@ void insert_array_dq(int index, int data){
     dq[index] = data;
 }
 
-void get_cross(int row, int column){
-    
+int get_map_near(int cur, int row, int col){
+    int row_new = get_loc_row(cur) + row;
+    int col_new = get_loc_col(cur) + col;
+
+    if(row_new > 0 && row_new < MAP_SIZE_ROW && col_new > 0 && col_new < MAP_SIZE_COL)
+        return map[row_new][col_new];
+    return -1000;
 }
 
+// from 0 : from down | from 1 : from right
+int get_weight_2(int index, int from){
+    int check_list[12][2] = {{1,0},{0,1},{-1,0},{0,-1},{2,0},{0,2},{-2,0},{0,-2},{1,1},{1,-1},{-1,-1},{-1,1}};
+    int weight_of_weight_1[12] = {10,9,9,10,3,0,1,3,2,0,2,4};
+    int weight_of_weight_0[12] = {10,9,9,10,3,1,0,3,2,0,2,4};
+    int max = 0;
+    for(int i = 0 ; i < 4 ; i++){
+        int temp_weight = get_map_near(index,check_list[i][0],check_list[i][1]) - 2;
+        if (temp_weight > -1000){
+            // printf("i %d from %d to %d temp_weight %d\n",i,index,get_loc(get_loc_row(index) +check_list[i][0],get_loc_col(index) +check_list[i][1]),temp_weight);
+            if(from) max += temp_weight * weight_of_weight_1[i];
+            else max += temp_weight * weight_of_weight_0[i];
+        }
+            
+    }
 
+    for (int i = 4; i < 8; i++)
+    {
+        int temp_weight = -1000;
+        int via = get_map_near(index, check_list[i - 4][0], check_list[i - 4][1]);
+        int dest_weight = get_map_near(index, check_list[i][0], check_list[i][1]);
+        if(via <-999 || dest_weight < -999) temp_weight = -1000;
+        else temp_weight = dest_weight + via - 4;
+        if (temp_weight > -1000){
+            // printf("i %d from %d to %d temp_weight %d\n",i,index,get_loc(get_loc_row(index) +check_list[i][0],get_loc_col(index) +check_list[i][1]),temp_weight);
+            if(from) max += temp_weight * weight_of_weight_1[i];
+            else max += temp_weight * weight_of_weight_0[i];
+        }
+    }
 
+    for (int i = 8; i < 12; i++)
+    {
+        int temp_weight = -1000;
+        int via = get_map_near(index, check_list[i][0], 0);
+        if (get_map_near(index, 0, check_list[i][1]) > via)
+            via = get_map_near(index, 0, check_list[i][1]);
+        int dest_weight = get_map_near(index, check_list[i][0], check_list[i][1]);
+        if(via <-999 || dest_weight < -999) temp_weight = -1000;
+        else temp_weight = dest_weight + via - 4;
+        
+        if (temp_weight > -1000){
+            // printf("i %d from %d to %d temp_weight %d\n",i,index,get_loc(get_loc_row(index) +check_list[i][0],get_loc_col(index) +check_list[i][1]),temp_weight);
+            if(from) max += temp_weight * weight_of_weight_1[i];
+            else max += temp_weight * weight_of_weight_0[i];
+        }
+    }
+    return max;
+}
+    
 
 
 
@@ -207,7 +275,7 @@ void print_map()
     {
         for (int j = 0; j < MAP_SIZE_COL; j++)
         {
-            printf("%d ", map[i][j]);
+            printf("%3d ", map[i][j]);
         }
         printf("\n");
     }
@@ -239,8 +307,15 @@ void make_dq()
             else if (dp[l] < dp[u])
             {
                 number = u;
-            }else{
-
+            }
+            else{
+                int weight_up = get_weight_2(u,0);
+                int weight_left = get_weight_2(l,1);
+                printf("weight %d = %d | %d = %d\n",u,weight_up,l,weight_left);
+                if(weight_up > weight_left)
+                    number = u;
+                else
+                    number = l;
             }
         }
         else if (l < 0)
@@ -277,9 +352,19 @@ int main()
     // {
     //     dp[i] = 0;
     // }
+    find_red();
     caculate_map_score();
     print_map();
     dyn();
+
+    printf("dp\n");
+    for(int i  =0; i< MAP_SIZE_ROW ; i++){
+        for(int j = 0; j < MAP_SIZE_COL ; j++){
+            printf("%3d ",dp[MAP_SIZE_COL * i + j]);
+        }
+        printf("\n");
+    }
+
     make_dq();
     // printf("\n");
     
@@ -291,12 +376,6 @@ int main()
         printf("%d ", dq[i]);
     }
     printf("\n");
-    printf("dp\n");
-    for(int i  =0; i< MAP_SIZE_ROW ; i++){
-        for(int j = 0; j < MAP_SIZE_COL ; j++){
-            printf("%d ",dp[MAP_SIZE_COL * i + j]);
-        }
-        printf("\n");
-    }
+    
     printf("\n");
 }
