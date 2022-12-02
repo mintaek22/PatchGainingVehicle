@@ -20,13 +20,17 @@
 int get_loc_row(int loc);
 int get_loc_col(int loc);
 int get_loc(int row, int col);
-
+void print_dq(void);
 
 
 void find_red(void);
 void insert_array_dq(int index, int data);
 int get_map_near(int cur, int row, int col);
 int get_weight_2(int index, int from);
+int remove_red_by_value(int value);
+void add_branch(void);
+int connect_branch(int loc_red);
+int get_dq_index_by_value(int value);
 
 
 // 0,0 ??? 3,3
@@ -52,7 +56,7 @@ int red_index = 0;
 
 void find_red(void){
     for(int i = 0 ; i < MAP_SIZE_ROW ; i++){
-        for(int j = 0 ; j < MAP_SIZE_ROW ; j++){
+        for(int j = 0 ; j < MAP_SIZE_COL ; j++){
             if(map[i][j] == 1){
                 red_list[red_index++] = get_loc(i,j);
             }
@@ -60,11 +64,30 @@ void find_red(void){
     }
 }
 
+int remove_red_by_value(int value){
+    int result = -1;
+    for(int i = 0; i < red_index; i++){
+        if(red_list[i] == value){
+            result = i;
+            red_list[i] = -1;
+            for(int j = i+1;  j < red_index;j++){
+                red_list[j-1] = red_list[j];
+            }
+            red_index--;
+            break;
+        }
+    }
+    return result;
+}
+
+
+
 void insert_array_dq(int index, int data){
     for(int i = DEST_QUEUE_SIZE - 1 ; i > index ; i--){
-        if(dq[i] == dq[i-1]);
+        dq[i] = dq[i-1];
     }
     dq[index] = data;
+    print_dq();
 }
 
 int get_map_near(int cur, int row, int col){
@@ -98,13 +121,27 @@ int get_weight_2(int index, int from){
         if(via <-999 || dest_weight < -999) temp_weight = -1000;
         else temp_weight = dest_weight + via;
         if (temp_weight > -1000){
-            // printf("i %d from %d to %d temp_weight %d\n",i,index,get_loc(get_loc_row(index) +check_list[i][0],get_loc_col(index) +check_list[i][1]),temp_weight);
+            // if(from) printf("i %2d from (%2d,%2d) to (%2d,%2d) temp_weight %3d   weight %4d\n",i,get_loc_row(index),get_loc_col(index),get_loc_row(index) +check_list[i][0],get_loc_col(index) +check_list[i][1],temp_weight,temp_weight * weight_of_weight_1[i]);
+            // else printf("i %2d from (%2d,%2d) to (%2d,%2d) temp_weight %3d   weight %4d\n",i,get_loc_row(index),get_loc_col(index),get_loc_row(index) +check_list[i][0],get_loc_col(index) +check_list[i][1],temp_weight,temp_weight * weight_of_weight_0[i]);
+            
             if(from) max += temp_weight * weight_of_weight_1[i];
             else max += temp_weight * weight_of_weight_0[i];
         }
 
     }
     return max;
+}
+
+int get_dq_index_by_value(int value){
+    int result = -1;
+    for(int i  =0; i< DEST_QUEUE_SIZE ; i++){
+        if(dq[i] == -1) break;
+        if(dq[i] == value){
+            result = i;
+            break;
+        }
+    }
+    return result;
 }
     
 
@@ -322,6 +359,58 @@ void make_dq()
     dq[++i] = -1;
 }
 
+void add_branch(void){
+    for(int i  =0; i< DEST_QUEUE_SIZE ; i++){
+        if(dq[i] == -1) break;
+        remove_red_by_value(dq[i]);
+    }
+
+    // printf("red left\n");
+    // for (int i = 0; i < red_index; i++)
+    // {
+    //     printf("%d ", red_list[i]);
+    // }
+    // printf("\n");
+
+    for(int i = 0; i < red_index ; i++){
+        printf("red %d\n",red_list[i]);
+        if(connect_branch(red_list[i]) == -1);
+    }
+}
+
+int connect_branch(int loc_red){
+    int result  = -1;
+    int check_list[12][2] = {{1,0},{0,1},{-1,0},{0,-1},{2,0},{0,2},{-2,0},{0,-2},{1,1},{1,-1},{-1,-1},{-1,1}};
+    for (int i = 0; i < 4; i++){
+        int dest_dq_idx = get_dq_index_by_value(get_loc(get_loc_row(loc_red) + check_list[i][0], get_loc_col(loc_red) + check_list[i][1]));
+        int dest_dq = dq[dest_dq_idx];
+        printf("to %d idx %d : %d\n",get_loc(get_loc_row(loc_red) + check_list[i][0], get_loc_col(loc_red) + check_list[i][1]),dest_dq_idx,dest_dq);
+        if(dest_dq_idx != -1){
+            insert_array_dq(dest_dq_idx,loc_red);
+            insert_array_dq(dest_dq_idx,dest_dq);
+            result = dest_dq;
+            break;
+        }
+    }
+    // if(result == -1){
+    //     for (int i = 4; i < 8; i++){
+    //         int dest_dq_idx = get_dq_index_by_value(get_map_near(loc_red,check_list[i][0],check_list[i][1]));
+    //         int dest_dq = dq[dest_dq];
+    //         int via = get_map_near(index, check_list[i - 4][0], check_list[i - 4][1]) -2
+    //         if(dest_dq_idx != -1){
+    //             insert_array_dq(dest_dq_idx,loc_red);
+    //             insert_array_dq(dest_dq_idx,dest_dq);
+    //             result = dest_dq;
+    //             break;
+    //         }
+    //     }
+    // }
+
+
+    // print_dq();
+    return result;
+}
+
 void caculate_map_score(void){
     for(int i  =0; i< MAP_SIZE_ROW ; i++){
         for(int j = 0; j < MAP_SIZE_COL ; j++){
@@ -332,6 +421,16 @@ void caculate_map_score(void){
             }
         }
     }
+}
+
+void print_dq(void){
+    printf("dq\n");
+    for (int i = 0; i < DEST_QUEUE_SIZE; i++)
+    {
+        
+        printf("%d ", dq[i]);
+    }
+    printf("\n");
 }
 
 int main()
@@ -357,13 +456,18 @@ int main()
     // printf("\n");
     
     // print_map();
-    printf("dq\n");
-    for (int i = 0; i < DEST_QUEUE_SIZE; i++)
+    print_dq();
+    
+    printf("red\n");
+    for (int i = 0; i < red_index; i++)
     {
-        
-        printf("%d ", dq[i]);
+        printf("%d ", red_list[i]);
     }
     printf("\n");
+
+    add_branch();
+
     
+
     printf("\n");
 }
