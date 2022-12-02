@@ -34,11 +34,16 @@ int get_dq_index_by_value(int value);
 
 
 // 0,0 ??? 3,3
+// int map[MAP_SIZE_ROW][MAP_SIZE_COL] =
+//     {{0, 1, 0, 0, 0},
+//      {0, 2, 1, 0, 2},
+//      {0, 1, 0, 0, 1},
+//      {0, 0, 0, 1, 0}};
 int map[MAP_SIZE_ROW][MAP_SIZE_COL] =
     {{0, 1, 0, 0, 0},
      {0, 2, 1, 0, 2},
-     {0, 1, 0, 0, 1},
-     {0, 0, 0, 1, 0}};
+     {0, 0, 0, 0, 1},
+     {0, 1, 0, 1, 0}};
 int dp[MAP_SIZE_ROW * MAP_SIZE_COL];
 
 int dq[DEST_QUEUE_SIZE] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -362,9 +367,12 @@ void make_dq()
 void add_branch(void){
     for(int i  =0; i< DEST_QUEUE_SIZE ; i++){
         if(dq[i] == -1) break;
-        remove_red_by_value(dq[i]);
+        
+        if(remove_red_by_value(dq[i]) != -1){
+            map[get_loc_row(dq[i])][get_loc_col(dq[i])] = -2;
+        }
     }
-
+    print_map();
     // printf("red left\n");
     // for (int i = 0; i < red_index; i++)
     // {
@@ -374,37 +382,106 @@ void add_branch(void){
 
     for(int i = 0; i < red_index ; i++){
         printf("red %d\n",red_list[i]);
-        if(connect_branch(red_list[i]) == -1);
+        if(connect_branch(red_list[i]) != -1){
+            printf("red deleted %d\n",red_list[i]);
+            map[get_loc_row(red_list[i])][get_loc_col(red_list[i])] = -2;
+            remove_red_by_value(red_list[i]);
+            i--;
+        }
     }
+    print_map();
 }
 
 int connect_branch(int loc_red){
-    int result  = -1;
     int check_list[12][2] = {{1,0},{0,1},{-1,0},{0,-1},{2,0},{0,2},{-2,0},{0,-2},{1,1},{1,-1},{-1,-1},{-1,1}};
+    int result  = -1;
+    int result_dq_idx = -1;
+    // int result_via_idx = -1;
+    // int result_via = -1;
+
+    int result_list[DEST_QUEUE_SIZE];
+    for(int i = 0; i< DEST_QUEUE_SIZE ; i++){
+        result_list[i] = -1;
+    }
+    int result_list_idx = 0;
+    int result_map_value = -5;
+
+
     for (int i = 0; i < 4; i++){
         int dest_dq_idx = get_dq_index_by_value(get_loc(get_loc_row(loc_red) + check_list[i][0], get_loc_col(loc_red) + check_list[i][1]));
         int dest_dq = dq[dest_dq_idx];
+        
         printf("to %d idx %d : %d\n",get_loc(get_loc_row(loc_red) + check_list[i][0], get_loc_col(loc_red) + check_list[i][1]),dest_dq_idx,dest_dq);
-        if(dest_dq_idx != -1){
-            insert_array_dq(dest_dq_idx,loc_red);
-            insert_array_dq(dest_dq_idx,dest_dq);
+        if(dest_dq_idx != -1 && map[get_loc_row(loc_red)][get_loc_col(loc_red)] > result_map_value){
+            result_list_idx = 0;
+            result_list[result_list_idx++] = loc_red;
+            result_list[result_list_idx++] = dest_dq;
+            result_dq_idx = dest_dq_idx;
             result = dest_dq;
-            break;
         }
     }
-    // if(result == -1){
-    //     for (int i = 4; i < 8; i++){
-    //         int dest_dq_idx = get_dq_index_by_value(get_map_near(loc_red,check_list[i][0],check_list[i][1]));
-    //         int dest_dq = dq[dest_dq];
-    //         int via = get_map_near(index, check_list[i - 4][0], check_list[i - 4][1]) -2
-    //         if(dest_dq_idx != -1){
-    //             insert_array_dq(dest_dq_idx,loc_red);
-    //             insert_array_dq(dest_dq_idx,dest_dq);
-    //             result = dest_dq;
-    //             break;
-    //         }
-    //     }
-    // }
+    if(result != -1){
+        for(int i = 0; i<result_list_idx ; i++){
+            insert_array_dq(result_dq_idx,result_list[i]);
+        }
+    }
+    else{
+        for (int i = 4; i < 8; i++){
+            int via_idx = get_loc(get_loc_row(loc_red) +check_list[i - 4][0],get_loc_col(loc_red) + check_list[i - 4][1]);
+            int via_value = map[get_loc_row(via_idx)][get_loc_col(via_idx)];
+            int dest_dq_idx = get_dq_index_by_value(get_loc(get_loc_row(loc_red) + check_list[i][0], get_loc_col(loc_red) + check_list[i][1]));
+            int dest_dq = dq[dest_dq_idx];
+            
+            printf("to %d idx %d : %d\n",get_loc(get_loc_row(loc_red) + check_list[i][0], get_loc_col(loc_red) + check_list[i][1]),dest_dq_idx,dest_dq);
+            if(dest_dq_idx != -1 && map[get_loc_row(loc_red)][get_loc_col(loc_red)] > result_map_value && via_value == 0){
+                result_list_idx = 0;
+                result_list[result_list_idx++] = via_idx;
+                result_list[result_list_idx++] = loc_red;
+                result_list[result_list_idx++] = via_idx;
+                result_list[result_list_idx++] = dest_dq;
+                result_dq_idx = dest_dq_idx;
+                result = dest_dq;
+                // result_via_idx = via;
+                // result_via_value
+                break;
+            }
+        }
+        if(result != -1){
+            for(int i = 0; i<result_list_idx ; i++){
+                insert_array_dq(result_dq_idx,result_list[i]);
+            }
+        }else{
+            for (int i = 8; i < 12; i++){
+                int via_idx = get_loc(get_loc_row(loc_red) +check_list[i][0],get_loc_col(loc_red) + 0);
+                int via_value = map[get_loc_row(via_idx)][get_loc_col(via_idx)];
+                if (get_map_near(loc_red, 0, check_list[i][1]) > via_value){
+                    via_idx = get_loc(get_loc_row(loc_red)+ 0,get_loc_col(loc_red) + check_list[i][1]);
+                    via_value = map[get_loc_row(via_idx)][get_loc_col(via_idx)];
+                }
+                int dest_dq_idx = get_dq_index_by_value(get_loc(get_loc_row(loc_red) + check_list[i][0], get_loc_col(loc_red) + check_list[i][1]));
+                int dest_dq = dq[dest_dq_idx];
+                
+                printf("to %d idx %d : %d\n",get_loc(get_loc_row(loc_red) + check_list[i][0], get_loc_col(loc_red) + check_list[i][1]),dest_dq_idx,dest_dq);
+                if(dest_dq_idx != -1 && map[get_loc_row(loc_red)][get_loc_col(loc_red)] > result_map_value && via_value == 0){
+                    result_list_idx = 0;
+                    result_list[result_list_idx++] = via_idx;
+                    result_list[result_list_idx++] = loc_red;
+                    result_list[result_list_idx++] = via_idx;
+                    result_list[result_list_idx++] = dest_dq;
+                    result_dq_idx = dest_dq_idx;
+                    result = dest_dq;
+                    // result_via_idx = via;
+                    // result_via_value
+                    break;
+                }
+            }
+            if(result != -1){
+                for(int i = 0; i<result_list_idx ; i++){
+                    insert_array_dq(result_dq_idx,result_list[i]);
+                }
+            }
+        }
+    }
 
 
     // print_dq();
