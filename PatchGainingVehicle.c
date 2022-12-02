@@ -492,7 +492,7 @@ void calculate_direction(void){
 			return;
 		}
 
-		if(get_loc_col(dest) < get_loc_col(loc_cur)){
+		if(get_loc_row(dest) < get_loc_row(loc_cur)){
 			dir_dest = 0;
 			set_stat(MOVE,2);
 			return;
