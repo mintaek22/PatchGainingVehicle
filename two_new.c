@@ -23,6 +23,12 @@ int get_loc(int row, int col);
 
 
 
+void find_red(void);
+void insert_array_dq(int index, int data);
+int get_map_near(int cur, int row, int col);
+int get_weight_2(int index, int from);
+
+
 // 0,0 ??? 3,3
 int map[MAP_SIZE_ROW][MAP_SIZE_COL] =
     {{0, 1, 0, 0, 0},
@@ -76,45 +82,27 @@ int get_weight_2(int index, int from){
     int weight_of_weight_1[12] = {10,9,9,10,3,0,1,3,2,0,2,4};
     int weight_of_weight_0[12] = {10,9,9,10,3,1,0,3,2,0,2,4};
     int max = 0;
-    for(int i = 0 ; i < 4 ; i++){
-        int temp_weight = get_map_near(index,check_list[i][0],check_list[i][1]) - 2;
-        if (temp_weight > -1000){
-            // printf("i %d from %d to %d temp_weight %d\n",i,index,get_loc(get_loc_row(index) +check_list[i][0],get_loc_col(index) +check_list[i][1]),temp_weight);
-            if(from) max += temp_weight * weight_of_weight_1[i];
-            else max += temp_weight * weight_of_weight_0[i];
-        }
-            
-    }
-
-    for (int i = 4; i < 8; i++)
-    {
+    for (int i = 0; i < 12; i++){
+        int via = 0;
+        int dest_weight = get_map_near(index, check_list[i][0], check_list[i][1]) -2;
         int temp_weight = -1000;
-        int via = get_map_near(index, check_list[i - 4][0], check_list[i - 4][1]);
-        int dest_weight = get_map_near(index, check_list[i][0], check_list[i][1]);
-        if(via <-999 || dest_weight < -999) temp_weight = -1000;
-        else temp_weight = dest_weight + via - 4;
-        if (temp_weight > -1000){
-            // printf("i %d from %d to %d temp_weight %d\n",i,index,get_loc(get_loc_row(index) +check_list[i][0],get_loc_col(index) +check_list[i][1]),temp_weight);
-            if(from) max += temp_weight * weight_of_weight_1[i];
-            else max += temp_weight * weight_of_weight_0[i];
+        if(i > 3 && i < 8) via = get_map_near(index, check_list[i - 4][0], check_list[i - 4][1]) -2;
+        if(i > 8){
+            via = get_map_near(index, check_list[i][0], 0);
+            if (get_map_near(index, 0, check_list[i][1]) > via)
+                via = get_map_near(index, 0, check_list[i][1]);
+            via -= 2;
         }
-    }
+        if(via == 3) via = 1;
 
-    for (int i = 8; i < 12; i++)
-    {
-        int temp_weight = -1000;
-        int via = get_map_near(index, check_list[i][0], 0);
-        if (get_map_near(index, 0, check_list[i][1]) > via)
-            via = get_map_near(index, 0, check_list[i][1]);
-        int dest_weight = get_map_near(index, check_list[i][0], check_list[i][1]);
         if(via <-999 || dest_weight < -999) temp_weight = -1000;
-        else temp_weight = dest_weight + via - 4;
-        
+        else temp_weight = dest_weight + via;
         if (temp_weight > -1000){
             // printf("i %d from %d to %d temp_weight %d\n",i,index,get_loc(get_loc_row(index) +check_list[i][0],get_loc_col(index) +check_list[i][1]),temp_weight);
             if(from) max += temp_weight * weight_of_weight_1[i];
             else max += temp_weight * weight_of_weight_0[i];
         }
+
     }
     return max;
 }
