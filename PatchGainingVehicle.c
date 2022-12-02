@@ -5,7 +5,7 @@
 #pragma config(Motor, motorC, rm, tmotorEV3_Large, PIDControl, encoder)
 
 #define TICKRATE 20
-#define SPEED_MAX 20
+#define SPEED_MAX 14
 
 //color
 #define BLACK 1
@@ -287,6 +287,10 @@ void update_stat_by_color(void){
 	if(get_stat(MOVE) != 2){
 		if (get_stat(DETECT) && col_middle == WHITE){
 			int warigari = get_stat(WARIGARI);
+
+			set_motor(0,0);
+			sleep(500);
+
 			if (warigari == 2){
 				// if(!wari_diff--){
 					set_stat(WARIGARI, 1);
@@ -295,7 +299,7 @@ void update_stat_by_color(void){
 			}
 			else{
 				// if(!wari_diff--){
-					set_stat(WARIGARI, 2);
+					set_stat(WARIGARI, 1);
 					// wari_diff = WARI_DIFF;
 				// }
 			}
