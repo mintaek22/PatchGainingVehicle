@@ -447,16 +447,13 @@ void update_dq_1(void){
 
 
 void update_dq_2(void){
-	/*
-	code here!
-	*/
-	/*
-	for ...
-		dq[somthing] = something
-
-
-	dq[end+1] = -1;
-	*/
+	find_red();
+	caculate_map_score();
+    print_map();
+    dyn();
+	make_dq();
+	add_branch();
+	print_dq();
 }
 
 void calculate_direction(void){
