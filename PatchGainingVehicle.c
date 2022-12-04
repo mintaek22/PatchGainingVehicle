@@ -72,8 +72,8 @@ int red_index = 0;
 
 
 int check_list[12][2] = {{1,0},{0,1},{-1,0},{0,-1},{2,0},{0,2},{-2,0},{0,-2},{1,1},{1,-1},{-1,-1},{-1,1}};
-int weight_of_weight_1[12] = {10,9,9,10,3,0,1,3,2,0,2,4};
-int weight_of_weight_0[12] = {10,9,9,10,3,1,0,3,2,0,2,4};
+int weight_of_weight_1[12] = {9,0,10,10,2,0,3,3,1,2,4,2};
+int weight_of_weight_0[12] = {0,9,10,10,0,2,3,3,1,2,4,2};
 
 void init_stat(void);
 int get_stat(int index);
@@ -183,7 +183,7 @@ void init_dq(void){
 	for(int i = 0; i< DEST_QUEUE_SIZE ; i++){
 		dq[i] = -1;
 		queue[i] = -1;
-		red_list = -1;
+		red_list[i] = -1;
 	}
 	for(int i = 0; i< MAP_SIZE_ROW*MAP_SIZE_COL ; i++){
 		dp[i] = 0;
@@ -259,7 +259,7 @@ void print_map(){
 	for(int i = 0; i<MAP_SIZE_ROW ; i++){
 		for(int j = 0; j< MAP_SIZE_COL ; j++){
 			if(get_stat(DETECT)==4){
-				displayStringAt(j*15,(MAP_SIZE_ROW-i)*15, "%d", map[i][j]);
+				displayStringAt(j*15,(MAP_SIZE_ROW-i)*15, map[i][j]);
 			}
 			else{
 				displayStringAt(j*15,(MAP_SIZE_ROW-i)*15, map[i][j] == 0 ? "+" :(map[i][j] == 1 ? "O" : "X"));
@@ -464,11 +464,11 @@ void update_dq_2(void){
 	init_dq();
 	find_red();
 	caculate_map_score();
-    print_map();
+    // print_map();
     dyn();
 	make_dq();
 	add_branch();
-	print_dq();
+	// print_dq();
 }
 
 void calculate_direction(void){
