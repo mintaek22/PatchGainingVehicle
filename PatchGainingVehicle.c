@@ -456,7 +456,7 @@ void update_dq_1(void){
     dyn();
     make_dq();
 
-
+	score = dp[MAP_SIZE_COL*MAP_SIZE_ROW-1];
 }
 
 
@@ -767,7 +767,7 @@ void dyn()
 
         count++;
     }
-	score = dp[MAP_SIZE_COL*MAP_SIZE_ROW-1];
+	
 }
 void make_dq()
 {

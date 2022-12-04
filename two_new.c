@@ -14,8 +14,9 @@
 #define SCORE_RED 5
 #define SCORE_BLU -5
 
-
-
+//////////////////////////////
+int get_loc_near(int cur, int row, int col);
+/////////////////////////////////
 
 int get_loc_row(int loc);
 int get_loc_col(int loc);
@@ -42,8 +43,8 @@ int get_dq_index_by_value(int value);
 int map[MAP_SIZE_ROW][MAP_SIZE_COL] =
     {{0, 1, 0, 0, 0},
      {0, 2, 1, 0, 2},
-     {0, 0, 0, 0, 1},
-     {0, 1, 0, 1, 0}};
+     {0, 0, 1, 1, 1},
+     {0, 1, 0, 0, 0}};
 int dp[MAP_SIZE_ROW * MAP_SIZE_COL];
 
 int dq[DEST_QUEUE_SIZE] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -94,7 +95,7 @@ void insert_array_dq(int index, int data){
         dq[i] = dq[i-1];
     }
     dq[index] = data;
-    print_dq();
+    // print_dq();
 }
 
 int get_map_near(int cur, int row, int col){
@@ -104,6 +105,15 @@ int get_map_near(int cur, int row, int col){
     if(row_new > 0 && row_new < MAP_SIZE_ROW && col_new > 0 && col_new < MAP_SIZE_COL)
         return map[row_new][col_new];
     return -1000;
+}
+
+int get_loc_near(int cur, int row, int col){
+    int row_new = get_loc_row(cur) + row;
+    int col_new = get_loc_col(cur) + col;
+
+    if(row_new > 0 && row_new < MAP_SIZE_ROW && col_new > 0 && col_new < MAP_SIZE_COL)
+        return get_loc(row_new,col_new);
+    return -1;
 }
 
 // from 0 : from down | from 1 : from right
@@ -389,6 +399,7 @@ void add_branch(void){
         }
     }
     print_map();
+    print_dq();
 }
 
 int connect_branch(int loc_red){
@@ -406,10 +417,10 @@ int connect_branch(int loc_red){
 
 
     for (int i = 0; i < 4; i++){
-        int dest_dq_idx = get_dq_index_by_value(get_loc(get_loc_row(loc_red) + check_list[i][0], get_loc_col(loc_red) + check_list[i][1]));
+        int dest_dq_idx = get_dq_index_by_value(get_loc_near(loc_red,check_list[i][0],check_list[i][1]));
         int dest_dq = dq[dest_dq_idx];
         
-        printf("to %d idx %d : %d\n",get_loc(get_loc_row(loc_red) + check_list[i][0], get_loc_col(loc_red) + check_list[i][1]),dest_dq_idx,dest_dq);
+        printf("to %d idx %d : %d\n",get_loc_near(loc_red,check_list[i][0],check_list[i][1]),dest_dq_idx,dest_dq);
         if(dest_dq_idx != -1 && map[get_loc_row(loc_red)][get_loc_col(loc_red)] > result_map_value){
             result_list_idx = 0;
             result_list[result_list_idx++] = loc_red;
@@ -425,12 +436,12 @@ int connect_branch(int loc_red){
     }
     else{
         for (int i = 4; i < 8; i++){
-            int via_idx = get_loc(get_loc_row(loc_red) +check_list[i - 4][0],get_loc_col(loc_red) + check_list[i - 4][1]);
+            int via_idx = get_loc_near(loc_red,check_list[i - 4][0],check_list[i - 4][1]);
             int via_value = map[get_loc_row(via_idx)][get_loc_col(via_idx)];
-            int dest_dq_idx = get_dq_index_by_value(get_loc(get_loc_row(loc_red) + check_list[i][0], get_loc_col(loc_red) + check_list[i][1]));
+            int dest_dq_idx = get_dq_index_by_value(get_loc_near(loc_red,check_list[i][0],check_list[i][1]));
             int dest_dq = dq[dest_dq_idx];
             
-            printf("to %d idx %d : %d\n",get_loc(get_loc_row(loc_red) + check_list[i][0], get_loc_col(loc_red) + check_list[i][1]),dest_dq_idx,dest_dq);
+            printf("to %d idx %d : %d\n",get_loc_near(loc_red,check_list[i][0],check_list[i][1]),dest_dq_idx,dest_dq);
             if(dest_dq_idx != -1 && map[get_loc_row(loc_red)][get_loc_col(loc_red)] > result_map_value && via_value == 0){
                 result_list_idx = 0;
                 result_list[result_list_idx++] = via_idx;
@@ -450,16 +461,17 @@ int connect_branch(int loc_red){
             }
         }else{
             for (int i = 8; i < 12; i++){
-                int via_idx = get_loc(get_loc_row(loc_red) +check_list[i][0],get_loc_col(loc_red) + 0);
+                int via_idx = get_loc_near(loc_red,check_list[i][0],0);
                 int via_value = map[get_loc_row(via_idx)][get_loc_col(via_idx)];
                 if (get_map_near(loc_red, 0, check_list[i][1]) > via_value){
-                    via_idx = get_loc(get_loc_row(loc_red)+ 0,get_loc_col(loc_red) + check_list[i][1]);
+                    via_idx = get_loc_near(loc_red,0,check_list[i][1]);
                     via_value = map[get_loc_row(via_idx)][get_loc_col(via_idx)];
                 }
-                int dest_dq_idx = get_dq_index_by_value(get_loc(get_loc_row(loc_red) + check_list[i][0], get_loc_col(loc_red) + check_list[i][1]));
+                if(via_value == 5) continue;
+                int dest_dq_idx = get_dq_index_by_value(get_loc_near(loc_red,check_list[i][0],check_list[i][1]));
                 int dest_dq = dq[dest_dq_idx];
                 
-                printf("to %d idx %d : %d\n",get_loc(get_loc_row(loc_red) + check_list[i][0], get_loc_col(loc_red) + check_list[i][1]),dest_dq_idx,dest_dq);
+                printf("to %d idx %d : %d\n",get_loc_near(loc_red,check_list[i][0],check_list[i][1]),dest_dq_idx,dest_dq);
                 if(dest_dq_idx != -1 && map[get_loc_row(loc_red)][get_loc_col(loc_red)] > result_map_value && via_value == 0){
                     result_list_idx = 0;
                     result_list[result_list_idx++] = via_idx;
@@ -480,9 +492,6 @@ int connect_branch(int loc_red){
             }
         }
     }
-
-
-    // print_dq();
     return result;
 }
 
