@@ -57,7 +57,9 @@ int red_list[DEST_QUEUE_SIZE] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 // int red_list[DEST_QUEUE_SIZE];
 int red_index = 0;
 
-
+int check_list[12][2] = {{1,0},{0,1},{-1,0},{0,-1},{2,0},{0,2},{-2,0},{0,-2},{1,1},{1,-1},{-1,-1},{-1,1}};
+int weight_of_weight_1[12] = {9,0,10,10,2,0,3,3,1,2,4,2};
+int weight_of_weight_0[12] = {0,9,10,10,0,2,3,3,1,2,4,2};
 
 void find_red(void){
     for(int i = 0 ; i < MAP_SIZE_ROW ; i++){
@@ -106,9 +108,6 @@ int get_map_near(int cur, int row, int col){
 
 // from 0 : from down | from 1 : from right
 int get_weight_2(int index, int from){
-    int check_list[12][2] = {{1,0},{0,1},{-1,0},{0,-1},{2,0},{0,2},{-2,0},{0,-2},{1,1},{1,-1},{-1,-1},{-1,1}};
-    int weight_of_weight_1[12] = {10,9,9,10,3,0,1,3,2,0,2,4};
-    int weight_of_weight_0[12] = {10,9,9,10,3,1,0,3,2,0,2,4};
     int max = 0;
     for (int i = 0; i < 12; i++){
         int via = 0;
@@ -393,7 +392,6 @@ void add_branch(void){
 }
 
 int connect_branch(int loc_red){
-    int check_list[12][2] = {{1,0},{0,1},{-1,0},{0,-1},{2,0},{0,2},{-2,0},{0,-2},{1,1},{1,-1},{-1,-1},{-1,1}};
     int result  = -1;
     int result_dq_idx = -1;
     // int result_via_idx = -1;
