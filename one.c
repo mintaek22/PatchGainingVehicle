@@ -15,9 +15,7 @@
 #define SCORE_BLU -5
 
 
-void insert_array_dq(int index,int data){
-    
-}
+
 
 
 

@@ -15,9 +15,7 @@
 #define SCORE_BLU -5
 
 //////////////////////////////
-int get_loc_near(int cur, int row, int col);
-void delete_dq_by_index(int index);
-void delete_rollback(void);
+
 /////////////////////////////////
 
 int get_loc_row(int loc);
@@ -34,6 +32,9 @@ int remove_red_by_value(int value);
 void add_branch(void);
 int connect_branch(int loc_red);
 int get_dq_index_by_value(int value);
+int get_loc_near(int cur, int row, int col);
+void delete_dq_by_index(int index);
+void delete_rollback(void);
 
 
 
@@ -44,9 +45,9 @@ int get_dq_index_by_value(int value);
 //      {0, 1, 0, 0, 1},
 //      {0, 0, 0, 1, 0}};
 int map[MAP_SIZE_ROW][MAP_SIZE_COL] =
-    {{0, 1, 0, 1, 0},
-     {0, 2, 1, 1, 2},
-     {0, 0, 1, 0, 0},
+    {{0, 1, 1, 2, 0},
+     {0, 0, 0, 0, 0},
+     {0, 2, 2, 2, 2},
      {0, 0, 1, 0, 0}};
 int dp[MAP_SIZE_ROW * MAP_SIZE_COL];
 
@@ -62,8 +63,8 @@ int red_list[DEST_QUEUE_SIZE] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 int red_index = 0;
 
 int check_list[12][2] = {{1,0},{0,1},{-1,0},{0,-1},{2,0},{0,2},{-2,0},{0,-2},{1,1},{1,-1},{-1,-1},{-1,1}};
-int weight_of_weight_1[12] = {9,0,10,10,2,0,3,3,1,2,4,2};
-int weight_of_weight_0[12] = {0,9,10,10,0,2,3,3,1,2,4,2};
+int weight_of_weight_1[12] = {9,0,10,10,2,0,5,5,1,2,4,2};
+int weight_of_weight_0[12] = {0,9,10,10,0,2,5,5,1,2,4,2};
 
 int rollback_up[5] = {1,1-MAP_SIZE_COL,1,0,-MAP_SIZE_COL};
 int rollback_left[5] = {MAP_SIZE_COL,MAP_SIZE_COL-1,MAP_SIZE_COL,0,-1};
@@ -143,14 +144,14 @@ int get_weight_2(int index, int from){
         if(via < -999 || dest_weight < -999) temp_weight = -1000;
         else temp_weight = dest_weight + via;
         if (temp_weight > -1000){
-            // if(from) printf("i %2d from (%2d,%2d) to (%2d,%2d) temp_weight %3d   weight %4d\n",i,get_loc_row(index),get_loc_col(index),get_loc_row(index) +check_list[i][0],get_loc_col(index) +check_list[i][1],temp_weight,temp_weight * weight_of_weight_1[i]);
-            // else printf("i %2d from (%2d,%2d) to (%2d,%2d) temp_weight %3d   weight %4d\n",i,get_loc_row(index),get_loc_col(index),get_loc_row(index) +check_list[i][0],get_loc_col(index) +check_list[i][1],temp_weight,temp_weight * weight_of_weight_0[i]);
+            if(from) printf("i %2d from (%2d,%2d) to (%2d,%2d) temp_weight %3d   weight %4d\n",i,get_loc_row(index),get_loc_col(index),get_loc_row(index) +check_list[i][0],get_loc_col(index) +check_list[i][1],temp_weight,temp_weight * weight_of_weight_1[i]);
+            else printf("i %2d from (%2d,%2d) to (%2d,%2d) temp_weight %3d   weight %4d\n",i,get_loc_row(index),get_loc_col(index),get_loc_row(index) +check_list[i][0],get_loc_col(index) +check_list[i][1],temp_weight,temp_weight * weight_of_weight_0[i]);
             
             if(from) max += temp_weight * weight_of_weight_1[i];
             else max += temp_weight * weight_of_weight_0[i];
         }
-
     }
+    max += map[get_loc_row(index)][get_loc_col(index)] * 8;
     return max;
 }
 
@@ -299,17 +300,6 @@ void dyn()
         // printf("\n");
 
 
-        // printf("dp\n");
-        // for (int i = 0; i < MAP_SIZE_ROW; i++)
-        // {
-        //     for (int j = 0; j < MAP_SIZE_COL; j++)
-        //     {
-        //         printf("%d ", dp[MAP_SIZE_COL * i + j]);
-        //     }
-        //     printf("\n");
-        // }
-
-
         count++;
     }
 }
@@ -386,7 +376,7 @@ void add_branch(void){
             map[get_loc_row(dq[i])][get_loc_col(dq[i])] = -2;
         }
     }
-    print_map();
+    // print_map();
     // printf("red left\n");
     // for (int i = 0; i < red_index; i++)
     // {
@@ -395,26 +385,26 @@ void add_branch(void){
     // printf("\n");
 
     for(int i = 0; i < red_index ; i++){
-        printf("red %d\n",red_list[i]);
+        // printf("red %d\n",red_list[i]);
         if(connect_branch(red_list[i]) != -1){
-            printf("red deleted %d\n",red_list[i]);
+            // printf("red deleted %d\n",red_list[i]);
             map[get_loc_row(red_list[i])][get_loc_col(red_list[i])] = -2;
             remove_red_by_value(red_list[i]);
             i--;
         }
     }
-    print_dq();
+    // print_dq();
     for(int i = 0; i < red_index ; i++){
-        printf("red %d\n",red_list[i]);
+        // printf("red %d\n",red_list[i]);
         if(connect_branch(red_list[i]) != -1){
-            printf("red deleted %d\n",red_list[i]);
+            // printf("red deleted %d\n",red_list[i]);
             map[get_loc_row(red_list[i])][get_loc_col(red_list[i])] = -2;
             remove_red_by_value(red_list[i]);
             i--;
         }
     }
-    print_map();
-    print_dq();
+    // print_map();
+    // print_dq();
 }
 
 int connect_branch(int loc_red){
@@ -435,7 +425,7 @@ int connect_branch(int loc_red){
         int dest_dq_idx = get_dq_index_by_value(get_loc_near(loc_red,check_list[i][0],check_list[i][1]));
         int dest_dq = dq[dest_dq_idx];
         
-        printf("to %d idx %d : %d\n",get_loc_near(loc_red,check_list[i][0],check_list[i][1]),dest_dq_idx,dest_dq);
+        // printf("to %d idx %d : %d\n",get_loc_near(loc_red,check_list[i][0],check_list[i][1]),dest_dq_idx,dest_dq);
         if(dest_dq_idx != -1 && map[get_loc_row(loc_red)][get_loc_col(loc_red)] > result_map_value){
             result_list_idx = 0;
             result_list[result_list_idx++] = loc_red;
@@ -456,7 +446,7 @@ int connect_branch(int loc_red){
             int dest_dq_idx = get_dq_index_by_value(get_loc_near(loc_red,check_list[i][0],check_list[i][1]));
             int dest_dq = dq[dest_dq_idx];
             
-            printf("to %d idx %d : %d\n",get_loc_near(loc_red,check_list[i][0],check_list[i][1]),dest_dq_idx,dest_dq);
+            // printf("to %d idx %d : %d\n",get_loc_near(loc_red,check_list[i][0],check_list[i][1]),dest_dq_idx,dest_dq);
             if(dest_dq_idx != -1 && map[get_loc_row(loc_red)][get_loc_col(loc_red)] > result_map_value && via_value == 0){
                 result_list_idx = 0;
                 result_list[result_list_idx++] = via_idx;
@@ -486,7 +476,7 @@ int connect_branch(int loc_red){
                 int dest_dq_idx = get_dq_index_by_value(get_loc_near(loc_red,check_list[i][0],check_list[i][1]));
                 int dest_dq = dq[dest_dq_idx];
                 
-                printf("to %d idx %d : %d\n",get_loc_near(loc_red,check_list[i][0],check_list[i][1]),dest_dq_idx,dest_dq);
+                // printf("to %d idx %d : %d\n",get_loc_near(loc_red,check_list[i][0],check_list[i][1]),dest_dq_idx,dest_dq);
                 if(dest_dq_idx != -1 && map[get_loc_row(loc_red)][get_loc_col(loc_red)] > result_map_value && via_value == 0){
                     result_list_idx = 0;
                     result_list[result_list_idx++] = via_idx;
@@ -590,35 +580,46 @@ int main()
     // }
     find_red();
     caculate_map_score();
-    print_map();
+    // print_map();
     dyn();
 
-    printf("dp\n");
-    for(int i  =0; i< MAP_SIZE_ROW ; i++){
-        for(int j = 0; j < MAP_SIZE_COL ; j++){
-            printf("%3d ",dp[MAP_SIZE_COL * i + j]);
-        }
-        printf("\n");
-    }
+    // printf("dp\n");
+    // for(int i  =0; i< MAP_SIZE_ROW ; i++){
+    //     for(int j = 0; j < MAP_SIZE_COL ; j++){
+    //         printf("%3d ",dp[MAP_SIZE_COL * i + j]);
+    //     }
+    //     printf("\n");
+    // }
 
     make_dq();
     // printf("\n");
     
     // print_map();
-    print_dq();
+    // print_dq();
     
-    printf("red\n");
-    for (int i = 0; i < red_index; i++)
+    // printf("red\n");
+    // for (int i = 0; i < red_index; i++)
+    // {
+    //     printf("%d ", red_list[i]);
+    // }
+    // printf("\n");
+
+    printf("dp\n");
+    for (int i = 0; i < MAP_SIZE_ROW; i++)
     {
-        printf("%d ", red_list[i]);
+        for (int j = 0; j < MAP_SIZE_COL; j++)
+        {
+            printf("%2d ", dp[MAP_SIZE_COL * i + j]);
+        }
+        printf("\n");
     }
-    printf("\n");
 
     add_branch();
     delete_rollback();
-    printf("after delete rollback\n");
+    // printf("after delete rollback\n");
     print_dq();
+    print_map();
     calculate_score();
     printf("score %d\n",score);
-    printf("\n");
+    // printf("\n");
 }
