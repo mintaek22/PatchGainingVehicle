@@ -16,6 +16,8 @@
 
 //////////////////////////////
 int get_loc_near(int cur, int row, int col);
+void delete_dq_by_index(int index);
+void delete_rollback(void);
 /////////////////////////////////
 
 int get_loc_row(int loc);
@@ -32,8 +34,7 @@ int remove_red_by_value(int value);
 void add_branch(void);
 int connect_branch(int loc_red);
 int get_dq_index_by_value(int value);
-void delete_dq_by_index(int index);
-void delete_rollback(void);
+
 
 
 // 0,0 ??? 3,3
@@ -66,6 +67,8 @@ int weight_of_weight_0[12] = {0,9,10,10,0,2,3,3,1,2,4,2};
 
 int rollback_up[5] = {1,1-MAP_SIZE_COL,1,0,-MAP_SIZE_COL};
 int rollback_left[5] = {MAP_SIZE_COL,MAP_SIZE_COL-1,MAP_SIZE_COL,0,-1};
+
+int score = 0;
 
 void find_red(void){
     for(int i = 0 ; i < MAP_SIZE_ROW ; i++){
@@ -557,10 +560,26 @@ void print_dq(void){
     printf("dq\n");
     for (int i = 0; i < DEST_QUEUE_SIZE; i++)
     {
-        
         printf("%d ", dq[i]);
     }
     printf("\n");
+}
+
+void calculate_score(void){
+    score = 0;
+    for(int i = 0; i < DEST_QUEUE_SIZE ; i++){
+        if(dq[i] == -1)break;
+        score--;
+        int cur = map[get_loc_row(dq[i])][get_loc_col(dq[i])];
+        if(cur == -2){
+            score += 5;
+            map[get_loc_row(dq[i])][get_loc_col(dq[i])] = -4;
+        } else if (cur == -4){
+            score -= 2;
+        } else if (cur == -5){
+            score -= 5;
+        }
+    }
 }
 
 int main()
@@ -599,5 +618,7 @@ int main()
     delete_rollback();
     printf("after delete rollback\n");
     print_dq();
+    calculate_score();
+    printf("score %d\n",score);
     printf("\n");
 }
