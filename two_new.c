@@ -32,6 +32,8 @@ int remove_red_by_value(int value);
 void add_branch(void);
 int connect_branch(int loc_red);
 int get_dq_index_by_value(int value);
+void delete_dq_by_index(int index);
+void delete_rollback(void);
 
 
 // 0,0 ??? 3,3
@@ -41,10 +43,10 @@ int get_dq_index_by_value(int value);
 //      {0, 1, 0, 0, 1},
 //      {0, 0, 0, 1, 0}};
 int map[MAP_SIZE_ROW][MAP_SIZE_COL] =
-    {{0, 1, 0, 0, 0},
-     {0, 2, 1, 0, 2},
-     {0, 0, 1, 1, 1},
-     {0, 1, 0, 0, 0}};
+    {{0, 1, 0, 1, 0},
+     {0, 2, 1, 1, 2},
+     {0, 0, 1, 0, 0},
+     {0, 0, 1, 0, 0}};
 int dp[MAP_SIZE_ROW * MAP_SIZE_COL];
 
 int dq[DEST_QUEUE_SIZE] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -61,6 +63,9 @@ int red_index = 0;
 int check_list[12][2] = {{1,0},{0,1},{-1,0},{0,-1},{2,0},{0,2},{-2,0},{0,-2},{1,1},{1,-1},{-1,-1},{-1,1}};
 int weight_of_weight_1[12] = {9,0,10,10,2,0,3,3,1,2,4,2};
 int weight_of_weight_0[12] = {0,9,10,10,0,2,3,3,1,2,4,2};
+
+int rollback_up[5] = {1,1-MAP_SIZE_COL,1,0,-MAP_SIZE_COL};
+int rollback_left[5] = {MAP_SIZE_COL,MAP_SIZE_COL-1,MAP_SIZE_COL,0,-1};
 
 void find_red(void){
     for(int i = 0 ; i < MAP_SIZE_ROW ; i++){
@@ -132,7 +137,7 @@ int get_weight_2(int index, int from){
         }
         if(via == 3) via = 1;
 
-        if(via <-999 || dest_weight < -999) temp_weight = -1000;
+        if(via < -999 || dest_weight < -999) temp_weight = -1000;
         else temp_weight = dest_weight + via;
         if (temp_weight > -1000){
             // if(from) printf("i %2d from (%2d,%2d) to (%2d,%2d) temp_weight %3d   weight %4d\n",i,get_loc_row(index),get_loc_col(index),get_loc_row(index) +check_list[i][0],get_loc_col(index) +check_list[i][1],temp_weight,temp_weight * weight_of_weight_1[i]);
@@ -158,9 +163,6 @@ int get_dq_index_by_value(int value){
     return result;
 }
     
-
-
-
 //
 int get_loc_row(int loc)
 {
@@ -351,10 +353,10 @@ void make_dq()
                 int weight_up = get_weight_2(u,0);
                 int weight_left = get_weight_2(l,1);
                 printf("weight %d = %d | %d = %d\n",u,weight_up,l,weight_left);
-                if(weight_up > weight_left)
-                    number = u;
-                else
+                if(weight_left > weight_up)
                     number = l;
+                else
+                    number = u;
             }
         }
         else if (l < 0)
@@ -389,6 +391,16 @@ void add_branch(void){
     // }
     // printf("\n");
 
+    for(int i = 0; i < red_index ; i++){
+        printf("red %d\n",red_list[i]);
+        if(connect_branch(red_list[i]) != -1){
+            printf("red deleted %d\n",red_list[i]);
+            map[get_loc_row(red_list[i])][get_loc_col(red_list[i])] = -2;
+            remove_red_by_value(red_list[i]);
+            i--;
+        }
+    }
+    print_dq();
     for(int i = 0; i < red_index ; i++){
         printf("red %d\n",red_list[i]);
         if(connect_branch(red_list[i]) != -1){
@@ -507,6 +519,40 @@ void caculate_map_score(void){
     }
 }
 
+void delete_dq_by_index(int index){
+    for(int i = index; i<DEST_QUEUE_SIZE; i++){
+        if(dq[i] == -1) break;
+        dq[i] = dq[i+1];
+    }
+}
+
+void delete_rollback(void){
+
+    int result = -1;
+    for(int i = 0; i<DEST_QUEUE_SIZE-5; i++){
+        if(dq[i+1] == -1) break;
+        int isrollback_up = 1;
+        int isrollback_left = 1;
+        for (int j = 1; j < 6; j++)
+        {
+            if(dq[i+j] != dq[i] + rollback_up[j-1]){
+                isrollback_up = 0;
+            }
+            if(dq[i+j] != dq[i] + rollback_left[j-1]){
+                isrollback_left = 0;
+            }
+        }
+        if(isrollback_left || isrollback_up){
+            result = i;
+            break;
+        }
+    }
+    if(result != -1){
+        delete_dq_by_index(result + 3);
+        delete_dq_by_index(result + 3);
+    }
+}
+
 void print_dq(void){
     printf("dq\n");
     for (int i = 0; i < DEST_QUEUE_SIZE; i++)
@@ -550,8 +596,8 @@ int main()
     printf("\n");
 
     add_branch();
-
-    
-
+    delete_rollback();
+    printf("after delete rollback\n");
+    print_dq();
     printf("\n");
 }
